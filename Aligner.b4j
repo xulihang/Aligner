@@ -1,0 +1,612 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=aligner.png
+File2=BiTextFilesPicker.bjl
+File3=LangaugePairSelector.bjl
+File4=langcodes.txt
+File5=languagesWithoutSpace.txt
+File6=main.bjl
+File7=segment.bjl
+File8=segmentationRules.srx
+File9=srxPicker.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=javaobject
+Library4=jxmlsax
+Library5=xmlbuilder
+Library6=json
+Library7=jreflection
+Module1=BiTextFilesPicker
+Module10=Xml2Map
+Module11=Project
+Module12=SrxPicker
+Module2=LanguagePairSelector
+Module3=Utils
+Module4=txtFilter
+Module5=icu4j
+Module6=segmentation
+Module7=SRX
+Module8=XMLUtils
+Module9=Map2Xml
+NumberOfFiles=9
+NumberOfLibraries=7
+NumberOfModules=12
+Version=6.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+#AdditionalJar: icu4j
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private editorLV As ListView
+    Private currentProject As Project
+	Type Range(firstIndex As Int,lastIndex As Int)
+	Private StatusLabel As Label
+	Private cursorReachEnd As Boolean=False
+	Private SegmentsLabel As Label
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main") 'Load the layout file.
+	MainForm.Show
+	addScrollChangedEvent(editorLV)
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub MainForm_Resize (Width As Double, Height As Double)
+	CallSubDelayed(Me,"ListViewParent_Resize")
+End Sub
+
+Sub MenuBar1_Action
+	Dim mi As MenuItem
+	mi=Sender
+	Select mi.Text
+		Case "_About"
+			fx.Msgbox(MainForm,"Aligner"&CRLF&"@xulihang 2018","About")
+		Case "_Exit"
+			ExitApplication
+		Case "_New"
+			newProject
+		Case "_Open"
+			openProject
+		Case "_Save"
+			saveProject
+		Case "_Close"
+			closeProject
+		Case "_Read Files"
+			If currentProject.IsInitialized Then
+				Dim filesPicker As BiTextFilesPicker
+				filesPicker.Initialize
+				Dim result As Map=filesPicker.ShowAndWait(currentProject.getProjectFileValue("langPair"))
+				If result.ContainsKey("source")=False Then
+					Return
+				End If
+				currentProject.loadItemsToSegments(result)
+				loadSegmentsToListView
+			End If
+		Case "Tab-delimited Txt"
+			exportToTxt
+		Case "_Segment into sentences"
+			If currentProject.IsInitialized Then
+				Dim srxfilePicker As SrxPicker
+				srxfilePicker.Initialize
+				Dim srxPath As String=srxfilePicker.ShowAndWait
+				currentProject.loadSegmentsInSentenceLevel(srxPath)
+				loadSegmentsToListView
+			End If
+	End Select
+End Sub
+
+Sub exportToTxt
+	If currentProject.IsInitialized Then
+		If currentProject.segments.Size<>0 Then
+			Dim fc As FileChooser
+			fc.Initialize
+			fc.SetExtensionFilter("Txt",Array As String("*.txt"))
+			Dim path As String = fc.ShowSave(MainForm)
+			If path="" Then
+				Return
+			End If
+			Dim result As StringBuilder
+			result.Initialize
+			For Each segment As List In currentProject.segments
+				Dim source,target As String
+				source=segment.Get(0)
+				target=segment.Get(1)
+				result.Append(source).Append("	").Append(target).Append(CRLF)
+			Next
+			File.WriteString(path,"",result.ToString)
+			fx.Msgbox(MainForm,"Done.","")
+		End If
+	End If
+End Sub
+
+Sub newProject
+	Dim languageSelector As LanguagePairSelector
+	languageSelector.Initialize
+	Dim langPair As Map=languageSelector.ShowAndWait
+	Dim fc As FileChooser
+	fc.Initialize
+	fc.SetExtensionFilter("project file",Array As String("*.alp"))
+	Dim path As String=fc.ShowSave(MainForm)
+	If path<>"" Then
+		currentProject.Initialize(path)
+		currentProject.setProjectFileValue("langPair",langPair)
+		currentProject.saveProjectFile
+	End If
+End Sub
+
+Sub closeProject
+	Dim currentProject As Project
+	editorLV.Items.Clear
+End Sub
+
+Sub openProject
+	Dim fc As FileChooser
+	fc.Initialize
+	fc.SetExtensionFilter("project file",Array As String("*.alp"))
+	Dim path As String=fc.ShowOpen(MainForm)
+	If path<>"" Then
+        currentProject.Initialize(path)
+		currentProject.readProjectFile
+		loadSegmentsToListView
+	End If
+End Sub
+
+Sub loadSegmentsToListView
+	If currentProject.segments<>Null And currentProject.segments.Size<>0 Then
+		editorLV.Items.Clear
+		For i=0 To currentProject.segments.Size-1
+			editorLV.Items.Add("")
+		Next
+		Dim currentVisibleRange As Range
+		currentVisibleRange=getVisibleRange(editorLV)
+		fillPane(currentVisibleRange.firstIndex,currentVisibleRange.lastIndex)
+		CallSubDelayed(Me,"ListViewParent_Resize")
+	End If
+End Sub
+
+Sub saveProject
+	If currentProject.IsInitialized Then
+		currentProject.save
+		StatusLabel.Text="Project saved at "&DateTime.Time(DateTime.Now)
+	End If
+End Sub
+
+Public Sub createEmptyPane As Pane
+	Dim segmentPane As Pane
+	segmentPane.Initialize("segmentPane")
+	segmentPane.SetSize(editorLV.Width,50dip)
+	Return segmentPane
+End Sub
+
+
+Public Sub addTextAreaToSegmentPane(segmentpane As Pane,source As String,target As String)
+	segmentpane.LoadLayout("segment")
+	segmentpane.SetSize(editorLV.Width,50dip)
+	Dim sourceTextArea As TextArea
+	sourceTextArea=segmentpane.GetNode(0)
+	sourceTextArea.Text=source
+
+	addKeyEvent(sourceTextArea,"sourceTextArea")
+	addSelectionChangedEvent(sourceTextArea,"sourceTextAreaSelection")
+	Dim targetTextArea As TextArea
+	targetTextArea=segmentpane.GetNode(1)
+	targetTextArea.Text=target
+
+	addKeyEvent(targetTextArea,"targetTextArea")
+	addSelectionChangedEvent(targetTextArea,"targetTextAreaSelection")
+	sourceTextArea.Left=0
+	sourceTextArea.SetSize(editorLV.Width/2-20dip,50dip)
+	targetTextArea.Left=sourceTextArea.Left+sourceTextArea.Width
+	targetTextArea.SetSize(editorLV.Width/2-20dip,50dip)
+End Sub
+
+Sub addSelectionChangedEvent(textarea1 As TextArea,eventName As String)
+	Dim Obj As Reflector
+	Obj.Target = textarea1
+	Obj.AddChangeListener(eventName, "selectionProperty")
+	
+End Sub
+
+Sub addKeyEvent(textarea1 As TextArea,eventName As String)
+	Dim CJO As JavaObject = textarea1
+	Dim O As Object = CJO.CreateEventFromUI("javafx.event.EventHandler",eventName&"_KeyPressed",Null)
+	CJO.RunMethod("setOnKeyPressed",Array(O))
+	CJO.RunMethod("setFocusTraversable",Array(True))
+End Sub
+
+
+Sub sourceTextArea_KeyPressed_Event (MethodName As String, Args() As Object) As Object
+	Dim sourceTextArea As TextArea
+	sourceTextArea=Sender
+
+	Dim KEvt As JavaObject = Args(0)
+	Dim result As String
+	result=KEvt.RunMethod("getCode",Null)
+	Log(result)
+	If result="ENTER" Then
+		splitSegment(sourceTextArea,True)
+	Else if result="DELETE" Then
+		mergeSegment(sourceTextArea,True)
+	Else if result="DOWN" Then
+		If 	cursorReachEnd=False Then
+			cursorReachEnd=True
+		Else
+			changeSegment(1,sourceTextArea,0)
+		End If
+	Else if result="UP" Then
+		If 	cursorReachEnd=False Then
+			cursorReachEnd=True
+		Else
+			changeSegment(-1,sourceTextArea,0)
+		End If
+	else if result="TAB" Then
+		changeTextArea(sourceTextArea,1)
+	End If
+End Sub
+
+Sub targetTextArea_KeyPressed_Event (MethodName As String, Args() As Object) As Object
+	Dim KEvt As JavaObject = Args(0)
+	Dim result As String
+	result=KEvt.RunMethod("getCode",Null)
+	Log(result)
+	Dim targetTextArea As TextArea
+	targetTextArea=Sender
+	If result="ENTER" Then
+	    splitSegment(targetTextArea,False)
+	Else if result="DELETE" Then
+		mergeSegment(targetTextArea,False)
+	Else if result="DOWN" Then
+		If 	cursorReachEnd=False Then
+			cursorReachEnd=True
+		Else
+			changeSegment(1,targetTextArea,1)
+		End If
+	Else if result="UP" Then
+		If 	cursorReachEnd=False Then
+			cursorReachEnd=True
+		Else
+			changeSegment(-1,targetTextArea,1)
+		End If
+	else if result="TAB" Then
+		changeTextArea(targetTextArea,0)
+	End If
+End Sub
+
+Sub sourceTextAreaSelection_changed(old As Object, new As Object)
+	cursorReachEnd=False
+End Sub
+
+Sub targetTextAreaSelection_changed(old As Object, new As Object)
+	cursorReachEnd=False
+End Sub
+
+Sub changeTextArea(TextArea As TextArea,nodeIndex As Int)
+	TextArea.Text=TextArea.Text.Replace("	","")
+	Dim pane As Pane
+	pane=TextArea.Parent
+	Dim theOtherTA As TextArea
+	theOtherTA=pane.GetNode(nodeIndex)
+	theOtherTA.RequestFocus
+End Sub
+
+
+Sub changeSegment(offset As Int,TextArea As TextArea,nodeIndex As Int)
+	Try
+		TextArea.Text=TextArea.Text.Replace(CRLF,"")
+		
+		Dim pane As Pane
+		pane=TextArea.Parent
+		Dim index As Int
+		index=editorLV.Items.IndexOf(pane)
+		If index+offset>=editorLV.Items.Size Or index+offset<0 Then
+			Return
+		End If
+		Dim nextPane As Pane
+		nextPane=editorLV.Items.Get(index+offset)
+		Dim nextTA As TextArea
+		nextTA=nextPane.GetNode(nodeIndex)
+		nextTA.RequestFocus
+		updateSegmentsLabel(nextTA)
+		Dim visibleRange As Range
+		visibleRange=getVisibleRange(editorLV)
+		If index+offset<visibleRange.firstIndex+1 Or index+offset>visibleRange.lastIndex-1 Then
+			If offset<0 Then
+				editorLV.ScrollTo(index+offset)
+			Else
+				editorLV.ScrollTo(index+offset-visibleRange.lastIndex+visibleRange.firstIndex+1)
+			End If
+		End If
+	Catch
+		Log(LastException)
+	End Try
+End Sub
+
+Public Sub fillPane(FirstIndex As Int, LastIndex As Int)
+	Try
+		Dim segments As List
+		segments=currentProject.segments
+	Catch
+		Log(LastException)
+		Return
+	End Try
+	Log("fillPane")
+	Dim ExtraSize As Int
+	ExtraSize=15
+	For i = Max(0,FirstIndex-ExtraSize*2) To Min(editorLV.Items.Size - 1,LastIndex+ExtraSize*2)
+		If i > FirstIndex - ExtraSize And i < LastIndex + ExtraSize Then
+			'visible+
+			If editorLV.Items.Get(i)="" Then
+
+				Dim segmentPane As Pane
+				segmentPane=createEmptyPane
+				Dim bitext As List
+				bitext=segments.Get(i)
+				addTextAreaToSegmentPane(segmentPane,bitext.Get(0),bitext.Get(1))
+				editorLV.Items.Set(i,segmentPane)
+			End If
+		Else
+			'not visible
+			editorLV.Items.Set(i,"")
+		End If
+	Next
+End Sub
+
+
+
+'------------------------
+
+Sub ListView1_ScrollPosition_Changed(OldVal As Object,NewVal As Object)
+	CallSubDelayed(Me,"checkVisibleRange")
+End Sub
+
+Sub checkVisibleRange
+	Try
+		Sleep(50)
+		Dim currentVisibleRange As Range
+		currentVisibleRange=getVisibleRange(editorLV)
+		fillPane(currentVisibleRange.firstIndex,currentVisibleRange.lastIndex)
+		CallSubDelayed(Me,"ListViewParent_Resize")
+	Catch
+		Log(LastException)
+	End Try
+End Sub
+
+Sub addScrollChangedEvent(lv As ListView)
+	Try
+		Dim jo As JavaObject
+		jo=lv
+		Dim ListViewScrollBar As JavaObject
+		ListViewScrollBar=jo.RunMethodJO("lookup",Array(".scroll-bar:vertical"))
+		Dim r As Reflector
+		r.Target=ListViewScrollBar
+		r.AddChangeListener("ListView1_ScrollPosition","valueProperty")
+	Catch
+		Log(LastException)
+	End Try
+End Sub
+
+Sub getVisibleRange(lv As ListView) As Range
+	Dim visibleRange As Range
+	visibleRange.Initialize
+	Try
+		Dim jo As JavaObject
+		jo=lv
+		Dim VirtualFlow As JavaObject
+		VirtualFlow=jo.RunMethodJO("getSkin",Null).RunMethodJO("getChildren",Null).RunMethodJO("get",Array(0))
+		Dim lastVisibleCell As JavaObject
+		lastVisibleCell=VirtualFlow.RunMethodJO("getLastVisibleCell",Null)
+		Dim firstVisibleCell As JavaObject
+		firstVisibleCell=VirtualFlow.RunMethodJO("getFirstVisibleCell",Null)
+		visibleRange.firstIndex=firstVisibleCell.RunMethod("getIndex",Null)
+		visibleRange.lastIndex=lastVisibleCell.RunMethod("getIndex",Null)
+	Catch
+		Log(LastException)
+	End Try
+	Return visibleRange
+End Sub
+
+
+Sub ListViewParent_Resize
+
+	Dim lv As ListView
+	lv=editorLV
+	Dim visibleRange As Range=getVisibleRange(lv)
+	Dim FirstVisibleIndex,LastVisibleIndex As Int
+	FirstVisibleIndex=visibleRange.firstIndex
+	LastVisibleIndex=visibleRange.lastIndex
+	If lv.Items.Size=0 Then
+		Return
+	End If
+	Dim itemWidth As Double = lv.Width
+	Dim ExtraSize As Int
+	ExtraSize=3
+	For i = Max(0, FirstVisibleIndex - ExtraSize) To Min(LastVisibleIndex + ExtraSize,editorLV.Items.Size - 1)
+		Try
+			Dim p As Pane
+			p=lv.Items.Get(i)
+		Catch
+			'Log(LastException)
+			Continue
+		End Try
+		Dim sourceTa As TextArea = p.GetNode(0)
+		Dim targetTa As TextArea = p.GetNode(1)
+		Dim sourcelbl,targetlbl As Label
+		sourcelbl.Initialize("")
+		targetlbl.Initialize("")
+		sourcelbl.Font=fx.DefaultFont(16)
+		targetlbl.Font=fx.DefaultFont(16)
+		Dim sourceHeight,targetHeight As Int
+		Dim sourceLineHeight As Int=Utils.MeasureMultilineTextHeight(sourcelbl.Font,itemWidth/2-20dip,CRLF)
+		Dim targetLineHeight As Int=Utils.MeasureMultilineTextHeight(targetlbl.Font,itemWidth/2-20dip,CRLF)
+		sourceHeight=Utils.MeasureMultilineTextHeight(sourcelbl.Font,itemWidth/2-20dip,sourceTa.Text)+sourceLineHeight*2/3
+		targetHeight=Utils.MeasureMultilineTextHeight(targetlbl.Font,itemWidth/2-20dip,targetTa.Text)+targetLineHeight*2/3
+		Dim h As Int = Max(Max(20, sourceHeight + 10), targetHeight + 10)
+		setLayout(p,i,h)
+	Next
+End Sub
+
+
+Public Sub setLayout(p As Pane,index As Int,h As Int)
+	Dim itemwidth As Double
+	itemwidth=editorLV.Width
+	p.Left=0
+	p.SetSize(itemwidth-40dip,h)
+	Dim sourceTa As TextArea = p.GetNode(0)
+	Dim targetTa As TextArea = p.GetNode(1)
+	sourceTa.Left=0
+	sourceTa.SetSize(itemwidth/2-20dip,h)
+	targetTa.Left=itemwidth/2-20dip
+	targetTa.SetSize(itemwidth/2-20dip,h)
+End Sub
+
+Sub mergeSegment(TextArea As TextArea,isSource As Boolean)
+	Dim index As Int
+	index=editorLV.Items.IndexOf(TextArea.Parent)
+	If index+1>currentProject.segments.Size-1 Then
+		Return
+	End If
+	Dim textIndex As Int
+	If isSource Then
+	    textIndex=0
+	Else
+		textIndex=1
+	End If
+	Dim bitext As List
+	Dim nextBitext As List
+	bitext=currentProject.segments.Get(index)
+	nextBitext=currentProject.segments.Get(index+1)
+	
+	Dim whiteSpace As String
+	Dim lang As String
+	Dim langPair As Map=currentProject.getProjectFileValue("langPair")
+	If isSource Then
+		lang=langPair.Get("source")
+	Else
+		lang=langPair.Get("target")
+	End If
+	If Utils.LanguageHasSpace(lang) Then
+		whiteSpace=" "
+	Else
+		whiteSpace=""
+	End If
+	
+	TextArea.Text=bitext.Get(textIndex)&whiteSpace&nextBitext.Get(textIndex)
+	TextArea.Text=TextArea.Text.Trim
+	bitext.Set(textIndex,TextArea.Text)
+	nextBitext.Set(textIndex,"")
+	
+	Dim nextPane As Pane
+	nextPane=editorLV.Items.Get(index+1)
+	Dim nextTa As TextArea
+	nextTa=nextPane.GetNode(textIndex)
+	nextTa.Text=""
+	Dim theOtherIndex As Int
+	If textIndex=0 Then
+		theOtherIndex=1
+	Else
+		theOtherIndex=0
+	End If
+	Dim theOtherNextTa As TextArea
+	theOtherNextTa=nextPane.GetNode(theOtherIndex)
+	If theOtherNextTa.Text.Trim="" And nextTa.Text.Trim="" Then
+		editorLV.Items.RemoveAt(index+1)
+		currentProject.segments.RemoveAt(index+1)
+	End If
+	CallSubDelayed(Me,"ListViewParent_Resize")
+End Sub
+
+Sub splitSegment(TextArea As TextArea,isSource As Boolean)
+	Dim index As Int
+	index=editorLV.Items.IndexOf(TextArea.Parent)
+	Dim textIndex As Int
+	If isSource Then
+		textIndex=0
+	Else
+		textIndex=1
+	End If
+	
+	Dim text As String
+	text=TextArea.Text.SubString2(0,TextArea.SelectionEnd)
+	text=text.Replace(CRLF,"").Trim
+	Dim nextText As String
+	nextText=TextArea.Text.SubString2(TextArea.SelectionEnd,TextArea.Text.Length).Trim
+	
+	TextArea.Text=text
+	
+	Dim bitext As List
+	Dim nextBitext As List
+	bitext=currentProject.segments.Get(index)
+	bitext.Set(textIndex,text)
+
+	nextBitext.Initialize
+	nextBitext.Add("")
+	nextBitext.Add("")
+
+	
+	Dim nextPane As Pane=createEmptyPane
+	
+	Dim nextSource,nextTarget As String
+	If isSource Then
+		nextSource=nextText
+		nextTarget=""
+	Else
+		nextTarget=nextText
+		nextSource=""
+	End If
+	nextBitext.Set(0,nextSource)
+	nextBitext.Set(1,nextTarget)
+	If nextSource="" And nextTarget="" Then
+		Log("empty pair")
+	Else
+		currentProject.segments.InsertAt(index+1,nextBitext)
+		addTextAreaToSegmentPane(nextPane,nextSource,nextTarget)
+		editorLV.Items.InsertAt(index+1,nextPane)
+	End If
+	CallSubDelayed(Me,"ListViewParent_Resize")
+End Sub
+
+
+Sub sourceTextArea_FocusChanged (HasFocus As Boolean)
+	Log(HasFocus)
+	Dim TextArea1 As TextArea
+	TextArea1=Sender
+	If HasFocus Then
+		updateSegmentsLabel(TextArea1)
+	End If
+End Sub
+
+Sub targetTextArea_FocusChanged (HasFocus As Boolean)
+	Log(HasFocus)
+	Dim TextArea1 As TextArea
+	TextArea1=Sender
+	If HasFocus Then
+		updateSegmentsLabel(TextArea1)
+	End If
+End Sub
+
+Sub updateSegmentsLabel(TextArea1 As TextArea)
+	Dim index As Int=editorLV.Items.IndexOf(TextArea1.Parent)
+	SegmentsLabel.Text=index&"/"&editorLV.Items.Size
+End Sub
