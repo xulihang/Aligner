@@ -11,7 +11,8 @@ Sub Class_Globals
 	Private SourcePathTextField As TextField
 	Private TargetPathTextField As TextField
 	Private LanguagePair As Map
-
+	Private sourceDrag As B4JDragToMe
+	Private targetDrag As B4JDragToMe
 End Sub
 
 'Initializes the object. You can add parameters to this method if needed.
@@ -20,6 +21,8 @@ Public Sub Initialize
 	frm.RootPane.LoadLayout("BiTextFilesPicker")
 	result.Initialize
 	LanguagePair.Initialize
+	sourceDrag.Initialize(SourcePathTextField, "sourceDrag")
+	targetDrag.Initialize(TargetPathTextField,"targetDrag")
 End Sub
 
 
@@ -48,4 +51,13 @@ Sub ChooseSourceButton_MouseClicked (EventData As MouseEvent)
 	fc.Initialize
 	fc.SetExtensionFilter("Text Files",Array As String("*.txt"))
 	SourcePathTextField.Text=fc.ShowOpen(frm)
+End Sub
+
+
+Sub sourceDrag_ReceivedFilePath (Filepath As String)
+	SourcePathTextField.Text=Filepath
+End Sub
+
+Sub targetDrag_ReceivedFilePath (Filepath As String)
+	TargetPathTextField.Text=Filepath
 End Sub

@@ -26,21 +26,23 @@ Library4=jxmlsax
 Library5=xmlbuilder
 Library6=json
 Library7=jreflection
-Module1=BiTextFilesPicker
-Module10=Xml2Map
-Module11=Project
-Module12=SrxPicker
-Module2=LanguagePairSelector
-Module3=Utils
-Module4=txtFilter
-Module5=icu4j
-Module6=segmentation
-Module7=SRX
-Module8=XMLUtils
-Module9=Map2Xml
+Library8=b4jdragtome
+Module1=Project
+Module10=Map2Xml
+Module11=Xml2Map
+Module12=TMX
+Module13=XMLUtils
+Module2=BiTextFilesPicker
+Module3=SrxPicker
+Module4=LanguagePairSelector
+Module5=Utils
+Module6=txtFilter
+Module7=icu4j
+Module8=segmentation
+Module9=SRX
 NumberOfFiles=9
-NumberOfLibraries=7
-NumberOfModules=12
+NumberOfLibraries=8
+NumberOfModules=13
 Version=6.8
 @EndOfDesignText@
 #Region Project Attributes 
@@ -52,13 +54,14 @@ Version=6.8
 
 Sub Process_Globals
 	Private fx As JFX
-	Private MainForm As Form
+	Public MainForm As Form
 	Private editorLV As ListView
     Private currentProject As Project
 	Type Range(firstIndex As Int,lastIndex As Int)
 	Private StatusLabel As Label
 	Private cursorReachEnd As Boolean=False
 	Private SegmentsLabel As Label
+
 End Sub
 
 Sub AppStart (Form1 As Form, Args() As String)
@@ -66,6 +69,7 @@ Sub AppStart (Form1 As Form, Args() As String)
 	MainForm.RootPane.LoadLayout("main") 'Load the layout file.
 	MainForm.Show
 	addScrollChangedEvent(editorLV)
+
 End Sub
 
 'Return true to allow the default exceptions handler to handle the uncaught exception.
@@ -106,6 +110,8 @@ Sub MenuBar1_Action
 			End If
 		Case "Tab-delimited Txt"
 			exportToTxt
+		Case "TMX"
+			exportToTMX
 		Case "_Segment into sentences"
 			If currentProject.IsInitialized Then
 				Dim srxfilePicker As SrxPicker
@@ -115,6 +121,40 @@ Sub MenuBar1_Action
 				loadSegmentsToListView
 			End If
 	End Select
+End Sub
+
+Sub exportToTMX
+	If currentProject.IsInitialized Then
+		If currentProject.segments.Size<>0 Then
+			Dim fc As FileChooser
+			fc.Initialize
+			fc.SetExtensionFilter("TMX",Array As String("*.tmx"))
+			Dim path As String = fc.ShowSave(MainForm)
+			If path="" Then
+				Return
+			End If
+
+			Dim segments As List
+			segments.Initialize
+			For Each segment As List In currentProject.segments
+				Dim source,target As String
+				source=segment.Get(0)
+				target=segment.Get(1)
+				If source="" Or target="" Then
+					Continue
+				End If
+				Dim bitext As List
+				bitext.Initialize
+				bitext.Add(source)
+				bitext.Add(target)
+				segments.Add(bitext)
+			Next
+			Dim langPair As Map
+			langPair=currentProject.getProjectFileValue("langPair")
+			TMX.export(segments,langPair.Get("source"),langPair.Get("target"),path,False,False)
+			fx.Msgbox(MainForm,"Done.","")
+		End If
+	End If
 End Sub
 
 Sub exportToTxt
@@ -207,19 +247,43 @@ Public Sub addTextAreaToSegmentPane(segmentpane As Pane,source As String,target 
 	Dim sourceTextArea As TextArea
 	sourceTextArea=segmentpane.GetNode(0)
 	sourceTextArea.Text=source
-
+	
+	addContextMenu(sourceTextArea,True)
 	addKeyEvent(sourceTextArea,"sourceTextArea")
 	addSelectionChangedEvent(sourceTextArea,"sourceTextAreaSelection")
 	Dim targetTextArea As TextArea
 	targetTextArea=segmentpane.GetNode(1)
 	targetTextArea.Text=target
 
+	addContextMenu(targetTextArea,False)
 	addKeyEvent(targetTextArea,"targetTextArea")
 	addSelectionChangedEvent(targetTextArea,"targetTextAreaSelection")
 	sourceTextArea.Left=0
 	sourceTextArea.SetSize(editorLV.Width/2-20dip,50dip)
 	targetTextArea.Left=sourceTextArea.Left+sourceTextArea.Width
 	targetTextArea.SetSize(editorLV.Width/2-20dip,50dip)
+End Sub
+
+Sub addContextMenu(ta As TextArea,isSource As Boolean)
+	Dim cm As ContextMenu
+	cm.Initialize("cm")
+	Dim delmi As MenuItem
+	delmi.Initialize("DELETE","delmi")
+	Dim upmi As MenuItem
+	upmi.Initialize("UP","upmi")
+	Dim downmi As MenuItem
+	downmi.Initialize("DOWN","downmi")
+	Dim tagList As List
+	tagList.Initialize
+	tagList.Add(ta)
+	tagList.Add(isSource)
+	delmi.Tag=tagList
+	upmi.Tag=tagList
+	downmi.Tag=tagList
+	cm.MenuItems.Add(upmi)
+	cm.MenuItems.Add(downmi)
+	cm.MenuItems.Add(delmi)
+	ta.ContextMenu=cm
 End Sub
 
 Sub addSelectionChangedEvent(textarea1 As TextArea,eventName As String)
@@ -493,6 +557,14 @@ Sub mergeSegment(TextArea As TextArea,isSource As Boolean)
 	Else
 		textIndex=1
 	End If
+	
+	Dim nextPane As Pane
+	nextPane=editorLV.Items.Get(index+1)
+	Dim nextTa As TextArea
+	nextTa=nextPane.GetNode(textIndex)
+	
+
+	nextTa.Text=""
 	Dim bitext As List
 	Dim nextBitext As List
 	bitext=currentProject.segments.Get(index)
@@ -517,17 +589,9 @@ Sub mergeSegment(TextArea As TextArea,isSource As Boolean)
 	bitext.Set(textIndex,TextArea.Text)
 	nextBitext.Set(textIndex,"")
 	
-	Dim nextPane As Pane
-	nextPane=editorLV.Items.Get(index+1)
-	Dim nextTa As TextArea
-	nextTa=nextPane.GetNode(textIndex)
-	nextTa.Text=""
+
 	Dim theOtherIndex As Int
-	If textIndex=0 Then
-		theOtherIndex=1
-	Else
-		theOtherIndex=0
-	End If
+	theOtherIndex=getTheOtherIndex(textIndex)
 	Dim theOtherNextTa As TextArea
 	theOtherNextTa=nextPane.GetNode(theOtherIndex)
 	If theOtherNextTa.Text.Trim="" And nextTa.Text.Trim="" Then
@@ -584,6 +648,7 @@ Sub splitSegment(TextArea As TextArea,isSource As Boolean)
 		addTextAreaToSegmentPane(nextPane,nextSource,nextTarget)
 		editorLV.Items.InsertAt(index+1,nextPane)
 	End If
+	
 	CallSubDelayed(Me,"ListViewParent_Resize")
 End Sub
 
@@ -609,4 +674,163 @@ End Sub
 Sub updateSegmentsLabel(TextArea1 As TextArea)
 	Dim index As Int=editorLV.Items.IndexOf(TextArea1.Parent)
 	SegmentsLabel.Text=index&"/"&editorLV.Items.Size
+End Sub
+
+Sub upmi_Action
+	Dim mi As MenuItem
+	mi=Sender
+	Log(mi.Text)
+	Dim tagList As List
+	tagList=mi.Tag
+	Dim ta As TextArea
+	ta=tagList.Get(0)
+	moveCell(tagList.Get(1),ta,True)
+End Sub
+
+Sub downmi_Action
+	Dim mi As MenuItem
+	mi=Sender
+	Log(mi.Text)
+	Dim tagList As List
+	tagList=mi.Tag
+	Dim ta As TextArea
+	ta=tagList.Get(0)
+	moveCell(tagList.Get(1),ta,False)
+End Sub
+
+
+Sub moveCell(isSource As Boolean,ta As TextArea,isUP As Boolean)
+	Dim p As Pane
+	p=ta.Parent
+	Dim index As Int=editorLV.Items.IndexOf(p)
+	
+	Dim taIndex As Int
+	If isSource Then
+		taIndex=0
+	Else
+		taIndex=1
+	End If
+	
+	Dim theOtherIndex As Int
+	If isUP Then
+		theOtherIndex=index-1
+	Else
+		theOtherIndex=index+1
+	End If
+	If theOtherIndex<0 or theOtherIndex>currentProject.segments.Size-1 Then
+		Return
+	End If
+
+	Dim bitext,theOtherBitext As List
+	bitext=currentProject.segments.Get(index)
+	theOtherBitext=currentProject.segments.Get(theOtherIndex)
+	Dim temp As String=bitext.Get(taIndex)
+	bitext.Set(taIndex,theOtherBitext.Get(taIndex))
+	theOtherBitext.Set(taIndex,temp)
+
+
+	ta.Text=bitext.Get(taIndex)
+
+	If editorLV.Items.Get(theOtherIndex)<>"" Then
+		Dim theOtherPane As Pane
+		theOtherPane=editorLV.Items.Get(theOtherIndex)
+		Dim theOtherTa As TextArea
+		theOtherTa=theOtherPane.GetNode(taIndex)
+		theOtherTa.Text=theOtherBitext.Get(taIndex)
+	End If
+	
+End Sub
+
+Sub delmi_Action
+	Dim mi As MenuItem
+	mi=Sender
+	Log(mi.Text)
+	Dim tagList As List
+	tagList=mi.Tag
+	Dim ta As TextArea
+	ta=tagList.Get(0)
+	deleteCell(tagList.Get(1),ta)
+End Sub
+
+Sub deleteCell(isSource As Boolean,ta As TextArea)
+	Dim p As Pane
+	p=ta.Parent
+	
+	Dim taIndex As Int
+	If isSource Then
+		taIndex=0
+	Else
+		taIndex=1
+	End If
+	Dim theOtherIndex As Int
+	theOtherIndex=getTheOtherIndex(taIndex)
+	
+	Dim index As Int
+	index=editorLV.Items.IndexOf(p)
+
+	Dim size As Int
+	size=editorLV.Items.Size
+
+	For i=index To size-2
+		Dim nextIndex As Int=i+1
+		Dim bitext As List
+		bitext=currentProject.segments.Get(i)
+        Dim nextBitext As List
+		nextBitext=currentProject.segments.Get(nextIndex)
+		bitext.Set(taIndex,nextBitext.Get(taIndex))
+		
+		If editorLV.Items.Get(i)<>"" Then 
+			Dim p As Pane
+			Dim ta As TextArea
+			p=editorLV.Items.Get(i)
+			ta=p.GetNode(taIndex)
+			ta.Text=bitext.Get(taIndex)
+		End If
+        If editorLV.Items.Get(nextIndex)<>"" Then
+			Dim nextPane As Pane
+			nextPane=editorLV.Items.Get(nextIndex)
+			Dim nextTa As TextArea
+			nextTa=nextPane.GetNode(taIndex)
+			nextTa.Text=nextBitext.Get(taIndex)
+		End If
+	Next
+	
+	'set the last segment empty
+	Dim bitext As List
+	bitext=currentProject.segments.Get(size-1)
+	bitext.Set(taIndex,"")
+	If editorLV.Items.Get(size-1)<>"" Then
+		Dim p As Pane
+		p=editorLV.Items.Get(size-1)
+		Dim ta As TextArea
+		ta=p.GetNode(taIndex)
+		ta.Text=""
+	End If
+	
+	Dim toRemoveIndexList As List
+	toRemoveIndexList.Initialize
+	Dim index As Int=0
+	For Each bitext As List In currentProject.segments
+		If bitext.Get(0)="" And bitext.Get(1)="" Then
+			toRemoveIndexList.Add(index)
+		End If
+		index=index+1
+	Next
+	toRemoveIndexList.Sort(False)
+    For Each index As Int In toRemoveIndexList
+		currentProject.segments.RemoveAt(index)
+		editorLV.Items.RemoveAt(index)
+    Next
+	
+End Sub
+
+
+Sub getTheOtherIndex(textIndex As Int) As Int
+	Dim theOtherIndex As Int
+	If textIndex=0 Then
+		theOtherIndex=1
+	Else
+		theOtherIndex=0
+	End If
+	Return theOtherIndex
 End Sub
