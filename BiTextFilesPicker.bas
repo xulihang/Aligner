@@ -34,23 +34,39 @@ Public Sub ShowAndWait(langPair As Map) As Map
 End Sub
 
 Sub ReadButton_MouseClicked (EventData As MouseEvent)
-	result.Put("source",txtFilter.readFileIntoParagraphs(SourcePathTextField.Text))
-	result.Put("target",txtFilter.readFileIntoParagraphs(TargetPathTextField.Text))
+	Dim sourceList,targetList As List
+	sourceList.Initialize
+	targetList.Initialize
+	If SourcePathTextField.Text.EndsWith(".txt") Then
+		sourceList=txtFilter.readFileIntoParagraphs(SourcePathTextField.Text)
+	else if SourcePathTextField.Text.EndsWith(".docx") Then
+		sourceList=openxmlFilter.readFileIntoParagraphs(SourcePathTextField.Text)
+	End If
+	
+	If TargetPathTextField.Text.EndsWith(".txt") Then
+		targetList=txtFilter.readFileIntoParagraphs(TargetPathTextField.Text)
+	else if TargetPathTextField.Text.EndsWith(".docx") Then
+		targetList=openxmlFilter.readFileIntoParagraphs(TargetPathTextField.Text)
+	End If
+	
+	result.Put("source",sourceList)
+	result.Put("target",targetList)
 	frm.Close
 End Sub
 
 Sub ChooseTargetButton_MouseClicked (EventData As MouseEvent)
-	Dim fc As FileChooser
-	fc.Initialize
-	fc.SetExtensionFilter("Text Files",Array As String("*.txt"))
-	TargetPathTextField.Text=fc.ShowOpen(frm)
+	TargetPathTextField.Text=chooseFile
 End Sub
 
 Sub ChooseSourceButton_MouseClicked (EventData As MouseEvent)
+	SourcePathTextField.Text=chooseFile
+End Sub
+
+Sub chooseFile As String
 	Dim fc As FileChooser
 	fc.Initialize
-	fc.SetExtensionFilter("Text Files",Array As String("*.txt"))
-	SourcePathTextField.Text=fc.ShowOpen(frm)
+	fc.SetExtensionFilter("Text Files",Array As String("*.txt","*.docx"))
+	Return fc.ShowOpen(frm)
 End Sub
 
 

@@ -13,6 +13,40 @@ Sub getMap(key As String,parentmap As Map) As Map
 	Return parentmap.Get(key)
 End Sub
 
+Sub getBitext(text As String) As Map
+	Dim result As Map
+	result.Initialize
+	Dim lines As List
+	lines.Initialize
+	lines.AddAll(Regex.Split(CRLF,text))
+	Dim chineseLines As List
+	chineseLines.Initialize
+	Dim englishLines As List
+	englishLines.Initialize
+	For i=0 To lines.Size-1
+		Dim line As String=lines.Get(i)
+		Dim matcher As Matcher
+		matcher = Regex.Matcher("[a-zA-Z]",line)
+		Dim existEnglish As Boolean=matcher.Find
+		If isChinese(line) And existEnglish Then
+			Continue
+		Else if isChinese(line) And existEnglish=False Then
+			Try
+				Dim englisgLine As String=lines.Get(i+1)
+				If isChinese(englisgLine)=False Then
+					englishLines.Add(englisgLine)
+					chineseLines.Add(line)
+				End If
+			Catch
+				Log(LastException)
+			End Try
+		End If
+	Next
+	result.Put("source",chineseLines)
+	result.Put("target",englishLines)
+	Return result
+End Sub
+
 Sub LanguageHasSpace(lang As String) As Boolean
 	Dim languagesWithoutSpaceList As List
 	languagesWithoutSpaceList=File.ReadList(File.DirAssets,"languagesWithoutSpace.txt")
@@ -93,6 +127,12 @@ Sub MeasureMultilineTextHeight (Font As Font, Width As Double, Text As String) A
 	Return jo.RunMethod("MeasureMultilineTextHeight", Array(Font, Text, Width))
 End Sub
 
+Sub isChinese(text As String) As Boolean
+	Dim jo As JavaObject
+	jo=Me
+	Return jo.RunMethod("isChinese",Array As String(text))
+End Sub
+
 #If JAVA
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -105,4 +145,49 @@ public static double MeasureMultilineTextHeight(Font f, String text, double widt
   m.setAccessible(true);
   return (Double)m.invoke(null, f, text, width, TextBoundsType.LOGICAL);
   }
+
+private static boolean isChinese(char c) {
+
+    Character.UnicodeBlock ub = Character.UnicodeBlock.of(c);
+
+    if (ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS || ub == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS
+
+            || ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A || ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B
+
+            || ub == Character.UnicodeBlock.CJK_SYMBOLS_AND_PUNCTUATION || ub == Character.UnicodeBlock.HALFWIDTH_AND_FULLWIDTH_FORMS
+
+            || ub == Character.UnicodeBlock.GENERAL_PUNCTUATION) {
+
+        return true;
+
+    }
+
+    return false;
+
+}
+
+
+
+// 完整的判断中文汉字和符号
+
+public static boolean isChinese(String strName) {
+
+    char[] ch = strName.toCharArray();
+
+    for (int i = 0; i < ch.length; i++) {
+
+        char c = ch[i];
+
+        if (isChinese(c)) {
+
+            return true;
+
+        }
+
+    }
+
+    return false;
+
+}
+
 #End If

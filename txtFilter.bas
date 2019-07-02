@@ -11,11 +11,10 @@ End Sub
 
 
 Sub readFileIntoParagraphs(filepath As String) As List
-	icu4j.convert(filepath,"")
+	Dim textContent As String = readTxt(filepath)
 	Dim segmentsList As List
 	segmentsList.Initialize
-	Dim content As String=File.ReadString(filepath,"")
-	For Each source As String In Regex.Split("\n",content)
+	For Each source As String In Regex.Split("\n",textContent)
 		If source.Trim="" Then
 			Continue
 		End If
@@ -23,6 +22,23 @@ Sub readFileIntoParagraphs(filepath As String) As List
 	Next
 	Return segmentsList
 End Sub
+
+Sub readTxt(filepath As String) As String
+	Dim encoding As String
+	encoding=icu4j.getEncoding(filepath,"")
+	Dim textContent As String
+	Dim textReader As TextReader
+	textReader.Initialize2(File.OpenInput(filepath,""),encoding)
+	textContent=textReader.ReadAll
+	textReader.Close
+	Return textContent
+End Sub
+
+Sub getBitext(path As String) As Map
+	Dim text As String=readTxt(path)
+	Return Utils.getBitext(text)
+End Sub
+
 
 Sub shouldAddSpace(sourceLang As String,targetLang As String,index As Int,segmentsList As List) As Boolean
 	Dim bitext As List=segmentsList.Get(index)

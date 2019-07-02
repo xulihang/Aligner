@@ -27,11 +27,13 @@ Library5=xmlbuilder
 Library6=json
 Library7=jreflection
 Library8=b4jdragtome
+Library9=jpoi
 Module1=Project
-Module10=Map2Xml
-Module11=Xml2Map
-Module12=TMX
-Module13=XMLUtils
+Module10=TMX
+Module11=XMLUtils
+Module12=Map2Xml
+Module13=Xml2Map
+Module14=openxmlFilter
 Module2=BiTextFilesPicker
 Module3=SrxPicker
 Module4=LanguagePairSelector
@@ -41,9 +43,9 @@ Module7=icu4j
 Module8=segmentation
 Module9=SRX
 NumberOfFiles=9
-NumberOfLibraries=8
-NumberOfModules=13
-Version=6.8
+NumberOfLibraries=9
+NumberOfModules=14
+Version=7.51
 @EndOfDesignText@
 #Region Project Attributes 
 	#MainFormWidth: 600
@@ -97,7 +99,7 @@ Sub MenuBar1_Action
 			saveProject
 		Case "_Close"
 			closeProject
-		Case "_Read Files"
+		Case "separate source file and target file"
 			If currentProject.IsInitialized Then
 				Dim filesPicker As BiTextFilesPicker
 				filesPicker.Initialize
@@ -107,6 +109,25 @@ Sub MenuBar1_Action
 				End If
 				currentProject.loadItemsToSegments(result)
 				loadSegmentsToListView
+			End If
+		Case "bilingual file"
+			If currentProject.IsInitialized Then
+				Dim fc As FileChooser
+				fc.Initialize
+				fc.SetExtensionFilter("Bilingual Files",Array As String("*.docx","*.txt"))
+				Dim path As String=fc.ShowOpen(MainForm)
+				Dim result As Map
+				result.Initialize
+				If File.Exists(path,"") Then
+					If path.EndsWith(".docx") Then
+						result=openxmlFilter.getBitext(path)
+					Else if path.EndsWith(".txt") Then
+						result=txtFilter.getBitext(path)
+					End If
+					currentProject.loadItemsToSegments(result)
+					loadSegmentsToListView
+				End If
+
 			End If
 		Case "Tab-delimited Txt"
 			exportToTxt
@@ -717,7 +738,7 @@ Sub moveCell(isSource As Boolean,ta As TextArea,isUP As Boolean)
 	Else
 		theOtherIndex=index+1
 	End If
-	If theOtherIndex<0 or theOtherIndex>currentProject.segments.Size-1 Then
+	If theOtherIndex<0 Or theOtherIndex>currentProject.segments.Size-1 Then
 		Return
 	End If
 
