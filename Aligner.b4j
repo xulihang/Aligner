@@ -30,10 +30,10 @@ Library8=b4jdragtome
 Library9=jpoi
 Module1=Project
 Module10=TMX
-Module11=XMLUtils
-Module12=Map2Xml
-Module13=Xml2Map
-Module14=openxmlFilter
+Module11=openxmlFilter
+Module12=XMLUtils
+Module13=Map2Xml
+Module14=Xml2Map
 Module2=BiTextFilesPicker
 Module3=SrxPicker
 Module4=LanguagePairSelector
@@ -92,6 +92,10 @@ Sub MenuBar1_Action
 		Case "_Exit"
 			ExitApplication
 		Case "_New"
+			If currentProject.IsInitialized Then
+				fx.Msgbox(MainForm,"Please first close this project","")
+				Return
+			End If
 			newProject
 		Case "_Open"
 			openProject
@@ -112,17 +116,26 @@ Sub MenuBar1_Action
 			End If
 		Case "bilingual file"
 			If currentProject.IsInitialized Then
+				Dim response As Int=fx.Msgbox2(MainForm,"Use high precision mode for Chinese/English alignment?","","Yes","","No",fx.MSGBOX_CONFIRMATION)
+				Dim highPrecison As Boolean
+				If response=fx.DialogResponse.POSITIVE Then
+					highPrecison=True
+				Else
+					highPrecison=False
+				End If
 				Dim fc As FileChooser
 				fc.Initialize
 				fc.SetExtensionFilter("Bilingual Files",Array As String("*.docx","*.txt"))
 				Dim path As String=fc.ShowOpen(MainForm)
 				Dim result As Map
 				result.Initialize
+				Dim langPair As Map
+				langPair=currentProject.getProjectFileValue("langPair")
 				If File.Exists(path,"") Then
 					If path.EndsWith(".docx") Then
-						result=openxmlFilter.getBitext(path)
+						result=openxmlFilter.getBitext(path,langPair,highPrecison)
 					Else if path.EndsWith(".txt") Then
-						result=txtFilter.getBitext(path)
+						result=txtFilter.getBitext(path,langPair,highPrecison)
 					End If
 					currentProject.loadItemsToSegments(result)
 					loadSegmentsToListView
@@ -674,22 +687,58 @@ Sub splitSegment(TextArea As TextArea,isSource As Boolean)
 End Sub
 
 
+
+Sub targetTextArea_TextChanged (Old As String, New As String)
+	Dim TextArea1 As TextArea
+	TextArea1=Sender
+	Try
+		Dim p As Pane=TextArea1.Parent
+		Dim index As Int= editorLV.Items.IndexOf(p)
+		Dim bitext As List=currentProject.segments.get(index)
+		bitext.Set(1,New)
+	Catch
+		Log(LastException)
+	End Try
+End Sub
+
+Sub sourceTextArea_TextChanged (Old As String, New As String)
+	Dim TextArea1 As TextArea
+	TextArea1=Sender
+	Try
+		Dim p As Pane=TextArea1.Parent
+		Dim index As Int= editorLV.Items.IndexOf(p)
+		Dim bitext As List=currentProject.segments.get(index)
+		bitext.Set(0,New)
+	Catch
+		Log(LastException)
+	End Try
+End Sub
+
 Sub sourceTextArea_FocusChanged (HasFocus As Boolean)
 	Log(HasFocus)
 	Dim TextArea1 As TextArea
 	TextArea1=Sender
-	If HasFocus Then
-		updateSegmentsLabel(TextArea1)
-	End If
+	Try
+		If HasFocus Then
+			updateSegmentsLabel(TextArea1)
+		End If
+	Catch
+		Log(LastException)
+	End Try
+
 End Sub
 
 Sub targetTextArea_FocusChanged (HasFocus As Boolean)
 	Log(HasFocus)
 	Dim TextArea1 As TextArea
 	TextArea1=Sender
-	If HasFocus Then
-		updateSegmentsLabel(TextArea1)
-	End If
+	Try
+		If HasFocus Then
+			updateSegmentsLabel(TextArea1)
+		End If
+	Catch
+		Log(LastException)
+	End Try
 End Sub
 
 Sub updateSegmentsLabel(TextArea1 As TextArea)

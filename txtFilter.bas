@@ -34,9 +34,9 @@ Sub readTxt(filepath As String) As String
 	Return textContent
 End Sub
 
-Sub getBitext(path As String) As Map
+Sub getBitext(path As String,langPair As Map,highPrecisionForZH As Boolean) As Map
 	Dim text As String=readTxt(path)
-	Return Utils.getBitext(text)
+	Return Utils.getBitext(text,langPair,highPrecisionForZH)
 End Sub
 
 

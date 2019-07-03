@@ -13,37 +13,53 @@ Sub getMap(key As String,parentmap As Map) As Map
 	Return parentmap.Get(key)
 End Sub
 
-Sub getBitext(text As String) As Map
+Sub getBitext(text As String,langPair As Map,highPrecisionForZH As Boolean) As Map
+	Dim sourceLang As String = langPair.Get("source")
+	Dim targetLang As String = langPair.Get("target")
 	Dim result As Map
 	result.Initialize
 	Dim lines As List
 	lines.Initialize
 	lines.AddAll(Regex.Split(CRLF,text))
-	Dim chineseLines As List
-	chineseLines.Initialize
-	Dim englishLines As List
-	englishLines.Initialize
+	Dim sourceLines As List
+	sourceLines.Initialize
+	Dim targetLines As List
+	targetLines.Initialize
 	For i=0 To lines.Size-1
 		Dim line As String=lines.Get(i)
-		Dim matcher As Matcher
-		matcher = Regex.Matcher("[a-zA-Z]",line)
-		Dim existEnglish As Boolean=matcher.Find
-		If isChinese(line) And existEnglish Then
-			Continue
-		Else if isChinese(line) And existEnglish=False Then
-			Try
-				Dim englisgLine As String=lines.Get(i+1)
-				If isChinese(englisgLine)=False Then
-					englishLines.Add(englisgLine)
-					chineseLines.Add(line)
-				End If
-			Catch
-				Log(LastException)
-			End Try
+		If highPrecisionForZH Then
+			Dim matcher As Matcher
+			matcher = Regex.Matcher("[a-zA-Z]",line)
+			Dim existEnglish As Boolean=matcher.Find
+			If isChinese(line) And existEnglish Then
+				Continue
+			Else if isChinese(line) And existEnglish=False Then
+				Try
+					Dim englisgLine As String
+					If sourceLang.StartsWith("zh") Then
+						englisgLine=lines.Get(i+1)
+					Else if targetLang.StartsWith("zh") Then
+						englisgLine=lines.Get(i-1)
+					End If
+				
+					If isChinese(englisgLine)=False Then
+						targetLines.Add(englisgLine)
+						sourceLines.Add(line)
+					End If
+				Catch
+					Log(LastException)
+				End Try
+			End If
+		Else
+			If i Mod 2 =0 Then
+				targetLines.Add(line)
+			Else
+				sourceLines.Add(line)
+			End If
 		End If
 	Next
-	result.Put("source",chineseLines)
-	result.Put("target",englishLines)
+	result.Put("source",sourceLines)
+	result.Put("target",targetLines)
 	Return result
 End Sub
 

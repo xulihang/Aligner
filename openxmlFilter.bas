@@ -23,10 +23,10 @@ Sub readFileIntoParagraphs(filepath As String) As List
 	Return segmentsList
 End Sub
 
-Sub getBitext(path As String) As Map
+Sub getBitext(path As String,langPair As Map,highPrecisionForZH as Boolean) As Map
 	Dim doc As JavaObject=OpenDocx(path,"")
 	Dim text As String=getText(doc)
-	Return Utils.getBitext(text)
+	Return Utils.getBitext(text,langPair,highPrecisionForZH)
 End Sub
 
 Sub getText(doc As JavaObject) As String
