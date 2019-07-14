@@ -43,6 +43,5 @@ ModuleClosedNodes6=
 ModuleClosedNodes7=
 ModuleClosedNodes8=
 ModuleClosedNodes9=
-NavigationStack=Main,getTheOtherIndex,837,0,Main,splitSegment,636,0,Main,sourceTextArea_TextChanged,642,0,Main,targetTextArea_TextChanged,642,0,Main,sourceTextArea_FocusChanged,671,6,Main,targetTextArea_FocusChanged,687,1,Main,updateSegmentsLabel,694,0,Main,newProject,164,0,Main,exportToTxt,141,0,Main,MenuBar1_Action,43,6
 SelectedBuild=0
-VisibleModules=1,2,3,4,5,6,7,8,9,10,11
+VisibleModules=1,2,3,4,5,6,7,8,9,10

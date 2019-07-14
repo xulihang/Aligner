@@ -37,18 +37,18 @@ Sub ReadButton_MouseClicked (EventData As MouseEvent)
 	Dim sourceList,targetList As List
 	sourceList.Initialize
 	targetList.Initialize
-	If SourcePathTextField.Text.EndsWith(".txt") Then
+	If SourcePathTextField.Text.ToLowerCase.EndsWith(".txt") Then
 		sourceList=txtFilter.readFileIntoParagraphs(SourcePathTextField.Text)
-	else if SourcePathTextField.Text.EndsWith(".docx") Then
+	else if SourcePathTextField.Text.ToLowerCase.EndsWith(".docx") Then
 		sourceList=openxmlFilter.readFileIntoParagraphs(SourcePathTextField.Text)
 	End If
 	
-	If TargetPathTextField.Text.EndsWith(".txt") Then
+	If TargetPathTextField.Text.ToLowerCase.EndsWith(".txt") Then
 		targetList=txtFilter.readFileIntoParagraphs(TargetPathTextField.Text)
-	else if TargetPathTextField.Text.EndsWith(".docx") Then
+	else if TargetPathTextField.Text.ToLowerCase.EndsWith(".docx") Then
 		targetList=openxmlFilter.readFileIntoParagraphs(TargetPathTextField.Text)
 	End If
-	
+
 	result.Put("source",sourceList)
 	result.Put("target",targetList)
 	frm.Close

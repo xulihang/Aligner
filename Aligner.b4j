@@ -45,7 +45,7 @@ Module9=SRX
 NumberOfFiles=9
 NumberOfLibraries=9
 NumberOfModules=14
-Version=7.51
+Version=7.32
 @EndOfDesignText@
 #Region Project Attributes 
 	#MainFormWidth: 600
