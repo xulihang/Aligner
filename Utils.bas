@@ -51,7 +51,7 @@ Sub getBitext(text As String,langPair As Map,highPrecisionForZH As Boolean) As M
 				End Try
 			End If
 		Else
-			If i Mod 2 =0 Then
+			If i Mod 2 <>0 Then
 				targetLines.Add(line)
 			Else
 				sourceLines.Add(line)

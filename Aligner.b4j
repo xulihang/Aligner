@@ -1,6 +1,7 @@
 ﻿AppType=JavaFX
 Build1=Default,b4j.example
 File1=aligner.png
+File10=srxPicker.bjl
 File2=BiTextFilesPicker.bjl
 File3=LangaugePairSelector.bjl
 File4=langcodes.txt
@@ -8,8 +9,9 @@ File5=languagesWithoutSpace.txt
 File6=main.bjl
 File7=segment.bjl
 File8=segmentationRules.srx
-File9=srxPicker.bjl
+File9=splitterChooser.bjl
 FileGroup1=Default Group
+FileGroup10=Default Group
 FileGroup2=Default Group
 FileGroup3=Default Group
 FileGroup4=Default Group
@@ -31,9 +33,11 @@ Library9=jpoi
 Module1=Project
 Module10=TMX
 Module11=openxmlFilter
-Module12=XMLUtils
-Module13=Map2Xml
-Module14=Xml2Map
+Module12=POIWord
+Module13=XMLUtils
+Module14=Map2Xml
+Module15=Xml2Map
+Module16=SplitterChooser
 Module2=BiTextFilesPicker
 Module3=SrxPicker
 Module4=LanguagePairSelector
@@ -42,9 +46,9 @@ Module6=txtFilter
 Module7=icu4j
 Module8=segmentation
 Module9=SRX
-NumberOfFiles=9
+NumberOfFiles=10
 NumberOfLibraries=9
-NumberOfModules=14
+NumberOfModules=16
 Version=7.51
 @EndOfDesignText@
 #Region Project Attributes 
@@ -88,7 +92,7 @@ Sub MenuBar1_Action
 	mi=Sender
 	Select mi.Text
 		Case "_About"
-			fx.Msgbox(MainForm,"Aligner"&CRLF&"@xulihang 2018","About")
+			fx.Msgbox(MainForm,"Aligner"&CRLF&"@xulihang 2019","About")
 		Case "_Exit"
 			ExitApplication
 		Case "_New"
@@ -142,7 +146,9 @@ Sub MenuBar1_Action
 				End If
 
 			End If
-		Case "Tab-delimited Txt"
+		Case "Docx"
+			exportToDocx
+		Case "Txt"
 			exportToTxt
 		Case "TMX"
 			exportToTMX
@@ -155,6 +161,32 @@ Sub MenuBar1_Action
 				loadSegmentsToListView
 			End If
 	End Select
+End Sub
+
+Sub exportToDocx
+	If currentProject.IsInitialized Then
+		If currentProject.segments.Size<>0 Then
+			Dim fc As FileChooser
+			fc.Initialize
+			fc.SetExtensionFilter("docx",Array As String("*.docx"))
+			Dim path As String = fc.ShowSave(MainForm)
+			If path="" Then
+				Return
+			End If
+			Dim rows As List
+			rows.Initialize
+			For Each segment As List In currentProject.segments
+				Dim source,target As String
+				source=segment.Get(0)
+				target=segment.Get(1)
+				rows.Add(Array As String(source,target))
+			Next
+			Dim poiw As POIWord
+			poiw.Initialize("","write")
+			poiw.createTable(rows,path)
+			fx.Msgbox(MainForm,"Done.","")
+		End If
+	End If
 End Sub
 
 Sub exportToTMX
@@ -194,6 +226,11 @@ End Sub
 Sub exportToTxt
 	If currentProject.IsInitialized Then
 		If currentProject.segments.Size<>0 Then
+			Dim sc As SplitterChooser
+			sc.Initialize
+			sc.Title="请输入原文和译文的分隔符："
+			Dim splitter As String
+			splitter=sc.showAndWait
 			Dim fc As FileChooser
 			fc.Initialize
 			fc.SetExtensionFilter("Txt",Array As String("*.txt"))
@@ -207,7 +244,7 @@ Sub exportToTxt
 				Dim source,target As String
 				source=segment.Get(0)
 				target=segment.Get(1)
-				result.Append(source).Append("	").Append(target).Append(CRLF)
+				result.Append(source).Append(splitter).Append(target).Append(CRLF)
 			Next
 			File.WriteString(path,"",result.ToString)
 			fx.Msgbox(MainForm,"Done.","")
@@ -558,8 +595,8 @@ Sub ListViewParent_Resize
 		Dim sourceHeight,targetHeight As Int
 		Dim sourceLineHeight As Int=Utils.MeasureMultilineTextHeight(sourcelbl.Font,itemWidth/2-20dip,CRLF)
 		Dim targetLineHeight As Int=Utils.MeasureMultilineTextHeight(targetlbl.Font,itemWidth/2-20dip,CRLF)
-		sourceHeight=Utils.MeasureMultilineTextHeight(sourcelbl.Font,itemWidth/2-20dip,sourceTa.Text)+sourceLineHeight*2/3
-		targetHeight=Utils.MeasureMultilineTextHeight(targetlbl.Font,itemWidth/2-20dip,targetTa.Text)+targetLineHeight*2/3
+		sourceHeight=Utils.MeasureMultilineTextHeight(sourcelbl.Font,itemWidth/2-20dip,sourceTa.Text)+sourceLineHeight
+		targetHeight=Utils.MeasureMultilineTextHeight(targetlbl.Font,itemWidth/2-20dip,targetTa.Text)+targetLineHeight
 		Dim h As Int = Max(Max(20, sourceHeight + 10), targetHeight + 10)
 		setLayout(p,i,h)
 	Next
