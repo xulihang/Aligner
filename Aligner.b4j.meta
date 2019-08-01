@@ -52,4 +52,3 @@ ModuleClosedNodes9=
 NavigationStack=Main,Process_Globals,8,0,Main,deleteCell,842,0,SplitterChooser,showAndWait,22,0,Visual Designer,splitterChooser.bjl,-100,4,Main,exportToTxt,172,6,Visual Designer,main.bjl,-100,3,Main,MenuBar1_Action,105,6
 SelectedBuild=0
 VisibleModules=1,2,3,4,5,6,7,8,9,10,16
->>>>>>> f4dd00e26784dbd5272d9aad163ab190303d003d
