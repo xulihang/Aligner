@@ -1,17 +1,19 @@
 ﻿AppType=JavaFX
 Build1=Default,b4j.example
 File1=aligner.png
-File10=srxPicker.bjl
-File2=BiTextFilesPicker.bjl
-File3=LangaugePairSelector.bjl
-File4=langcodes.txt
-File5=languagesWithoutSpace.txt
-File6=main.bjl
-File7=segment.bjl
-File8=segmentationRules.srx
-File9=splitterChooser.bjl
+File10=splitterChooser.bjl
+File11=srxPicker.bjl
+File2=AssPicker.bjl
+File3=BiTextFilesPicker.bjl
+File4=LangaugePairSelector.bjl
+File5=langcodes.txt
+File6=languagesWithoutSpace.txt
+File7=main.bjl
+File8=segment.bjl
+File9=segmentationRules.srx
 FileGroup1=Default Group
 FileGroup10=Default Group
+FileGroup11=Default Group
 FileGroup2=Default Group
 FileGroup3=Default Group
 FileGroup4=Default Group
@@ -32,12 +34,14 @@ Library8=b4jdragtome
 Library9=jpoi
 Module1=Project
 Module10=TMX
-Module11=openxmlFilter
-Module12=POIWord
-Module13=XMLUtils
-Module14=Map2Xml
-Module15=Xml2Map
-Module16=SplitterChooser
+Module11=SplitterChooser
+Module12=openxmlFilter
+Module13=POIWord
+Module14=XMLUtils
+Module15=Map2Xml
+Module16=Xml2Map
+Module17=assFilter
+Module18=AssPicker
 Module2=BiTextFilesPicker
 Module3=SrxPicker
 Module4=LanguagePairSelector
@@ -46,10 +50,10 @@ Module6=txtFilter
 Module7=icu4j
 Module8=segmentation
 Module9=SRX
-NumberOfFiles=10
+NumberOfFiles=11
 NumberOfLibraries=9
-NumberOfModules=16
-Version=7.51
+NumberOfModules=18
+Version=7.8
 @EndOfDesignText@
 #Region Project Attributes 
 	#MainFormWidth: 600
@@ -144,7 +148,17 @@ Sub MenuBar1_Action
 					currentProject.loadItemsToSegments(result)
 					loadSegmentsToListView
 				End If
-
+			End If
+		Case "bilingual ass file"
+			If currentProject.IsInitialized Then
+				Dim assFilePicker As AssPicker
+				assFilePicker.Initialize
+				Dim result As Map=assFilePicker.ShowAndWait
+				If result.ContainsKey("source")=False Then
+					Return
+				End If
+				currentProject.loadItemsToSegments(result)
+				loadSegmentsToListView
 			End If
 		Case "Docx"
 			exportToDocx
@@ -176,10 +190,11 @@ Sub exportToDocx
 			Dim rows As List
 			rows.Initialize
 			For Each segment As List In currentProject.segments
-				Dim source,target As String
+				Dim source,target,note As String
 				source=segment.Get(0)
 				target=segment.Get(1)
-				rows.Add(Array As String(source,target))
+				note=segment.Get(2)
+				rows.Add(Array As String(source,target,note))
 			Next
 			Dim poiw As POIWord
 			poiw.Initialize("","write")
@@ -203,9 +218,10 @@ Sub exportToTMX
 			Dim segments As List
 			segments.Initialize
 			For Each segment As List In currentProject.segments
-				Dim source,target As String
+				Dim source,target,note As String
 				source=segment.Get(0)
 				target=segment.Get(1)
+				note=segment.Get(2)
 				If source="" Or target="" Then
 					Continue
 				End If
@@ -213,11 +229,13 @@ Sub exportToTMX
 				bitext.Initialize
 				bitext.Add(source)
 				bitext.Add(target)
+				bitext.Add(note)
 				segments.Add(bitext)
 			Next
 			Dim langPair As Map
 			langPair=currentProject.getProjectFileValue("langPair")
-			TMX.export(segments,langPair.Get("source"),langPair.Get("target"),path,False,False)
+			'TMX.export(segments,langPair.Get("source"),langPair.Get("target"),path,False,False)
+			TMX.exportQuick(segments,langPair.Get("source"),langPair.Get("target"),path)
 			fx.Msgbox(MainForm,"Done.","")
 		End If
 	End If
@@ -241,10 +259,11 @@ Sub exportToTxt
 			Dim result As StringBuilder
 			result.Initialize
 			For Each segment As List In currentProject.segments
-				Dim source,target As String
+				Dim source,target,note As String
 				source=segment.Get(0)
 				target=segment.Get(1)
-				result.Append(source).Append(splitter).Append(target).Append(CRLF)
+				note=segment.Get(2)
+				result.Append(source).Append(splitter).Append(target).Append(splitter).Append(note.Replace(CRLF,"\n")).Append(CRLF)
 			Next
 			File.WriteString(path,"",result.ToString)
 			fx.Msgbox(MainForm,"Done.","")
@@ -338,22 +357,26 @@ End Sub
 Sub addContextMenu(ta As TextArea,isSource As Boolean)
 	Dim cm As ContextMenu
 	cm.Initialize("cm")
-	Dim delmi As MenuItem
-	delmi.Initialize("DELETE","delmi")
-	Dim upmi As MenuItem
-	upmi.Initialize("UP","upmi")
-	Dim downmi As MenuItem
-	downmi.Initialize("DOWN","downmi")
+	Dim delMi As MenuItem
+	delMi.Initialize("DELETE","delmi")
+	Dim upMi As MenuItem
+	upMi.Initialize("UP","upmi")
+	Dim downMi As MenuItem
+	downMi.Initialize("DOWN","downmi")
+	Dim viewNoteMi As MenuItem
+	viewNoteMi.Initialize("View Note","viewnotemi")
 	Dim tagList As List
 	tagList.Initialize
 	tagList.Add(ta)
 	tagList.Add(isSource)
-	delmi.Tag=tagList
-	upmi.Tag=tagList
-	downmi.Tag=tagList
-	cm.MenuItems.Add(upmi)
-	cm.MenuItems.Add(downmi)
-	cm.MenuItems.Add(delmi)
+	delMi.Tag=tagList
+	upMi.Tag=tagList
+	downMi.Tag=tagList
+	viewNoteMi.Tag=tagList
+	cm.MenuItems.Add(upMi)
+	cm.MenuItems.Add(downMi)
+	cm.MenuItems.Add(delMi)
+	cm.MenuItems.Add(viewNoteMi)
 	ta.ContextMenu=cm
 End Sub
 
@@ -698,6 +721,7 @@ Sub splitSegment(TextArea As TextArea,isSource As Boolean)
 	nextBitext.Initialize
 	nextBitext.Add("")
 	nextBitext.Add("")
+	nextBitext.Add("")
 
 	
 	Dim nextPane As Pane=createEmptyPane
@@ -803,6 +827,21 @@ Sub downmi_Action
 	Dim ta As TextArea
 	ta=tagList.Get(0)
 	moveCell(tagList.Get(1),ta,False)
+End Sub
+
+Sub viewnotemi_Action
+	Dim mi As MenuItem
+	mi=Sender
+	Log(mi.Text)
+	Dim tagList As List
+	tagList=mi.Tag
+	Dim ta As TextArea
+	ta=tagList.Get(0)
+	Dim p As Pane
+	p=ta.Parent
+	Dim index As Int=editorLV.Items.IndexOf(p)
+	Dim segment As List=currentProject.segments.Get(index)
+	fx.Msgbox(MainForm,segment.Get(2),"Note")
 End Sub
 
 

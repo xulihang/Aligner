@@ -29,8 +29,8 @@ Sub export(segments As List,sourceLang As String,targetLang As String,path As St
 	Dim tuList As List
 	tuList.Initialize
 	For Each bitext As List In segments
-		Dim tuvMap As Map
-		tuvMap.Initialize
+		Dim tuMap As Map
+		tuMap.Initialize
 		Dim tuvList As List
 		tuvList.Initialize
 		Dim index As Int=0
@@ -39,14 +39,19 @@ Sub export(segments As List,sourceLang As String,targetLang As String,path As St
 				seg=Regex.Replace2("<.*?>",32,seg,"")
 			End If
 			index=index+1
-			If index Mod 2=0 Then
+			If index = 2 Then
 				tuvList.Add(CreateMap("Attributes":CreateMap("xml:lang":targetLang),"seg":seg))
-			Else
+			Else if index = 1 Then
 				tuvList.Add(CreateMap("Attributes":CreateMap("xml:lang":sourceLang),"seg":seg))
 			End If
 		Next
-		tuvMap.Put("tuv",tuvList)
-		tuList.Add(tuvMap)
+		Dim note As String
+		note=bitext.Get(2)
+		If note<>"" Then
+			tuMap.Put("note",note)
+		End If
+		tuMap.Put("tuv",tuvList)
+		tuList.Add(tuMap)
 	Next
 	body.Put("tu",tuList)
 	tmxMap.Put("body",body)
@@ -68,6 +73,74 @@ Sub export(segments As List,sourceLang As String,targetLang As String,path As St
 	
 	File.WriteString(path,"",tmxstring)
 End Sub
+
+Sub exportQuick(segments As List,sourceLang As String,targetLang As String,path As String)
+	Dim head As String=$"<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<tmx version="1.4">
+    <header>
+        <creationtool>BasicCAT</creationtool>
+        <creationtoolversion>1.0.0</creationtoolversion>
+        <adminlang>en</adminlang>
+        <srclang>en</srclang>
+        <segtype>sentence</segtype>
+        <o-tmf>BasicCAT</o-tmf>
+    </header>
+    <body>"$
+	head=head&CRLF
+	Dim tail As String=$"    </body>
+</tmx>"$
+	Dim body As StringBuilder
+	body.Initialize
+	
+	For Each bitext As List In segments
+		body.Append("        <tu>").Append(CRLF)
+		Dim note As String
+		note=bitext.Get(2)
+		If note<>"" Then
+			note=EscapeXml(note)
+			body.Append($"            <note>${note}</note>"$).Append(CRLF)
+		End If
+		
+		Dim source As String=bitext.Get(0)
+		Dim target As String=bitext.Get(1)
+		source=EscapeXml(source)
+		target=EscapeXml(target)
+		body.Append($"            <tuv xml:lang="${sourceLang}">"$).Append(CRLF)
+		body.Append($"                <seg>${source}</seg>"$).Append(CRLF)
+		body.Append("            </tuv>").Append(CRLF)
+		body.Append($"            <tuv xml:lang="${targetLang}">"$).Append(CRLF)
+		body.Append($"                <seg>${target}</seg>"$).Append(CRLF)
+		body.Append("            </tuv>").Append(CRLF)
+
+		body.Append("        </tu>").Append(CRLF)
+	Next
+
+	File.WriteString(path,"",head&body.ToString&tail)
+End Sub
+
+Public Sub EscapeXml(Raw As String) As String
+	Dim sb As StringBuilder
+	sb.Initialize
+	For i = 0 To Raw.Length - 1
+		Dim c As Char = Raw.CharAt(i)
+		Select c
+			Case QUOTE
+				sb.Append("&quot;")
+			Case "'"
+				sb.Append("&apos;")
+			Case "<"
+				sb.Append("&lt;")
+			Case ">"
+				sb.Append("&gt;")
+			Case "&"
+				sb.Append("&amp;")
+			Case Else
+				sb.Append(c)
+		End Select
+	Next
+	Return sb.ToString
+End Sub
+
 
 Sub convertTags(xmlstring As String) As String
 	Dim inSegMatcher As Matcher

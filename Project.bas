@@ -23,9 +23,10 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String)
 	segmentsForIteration.Initialize
 	segmentsForIteration.AddAll(segments)
 	segments.Clear
-	Dim sourceSegments,targetSegments As List
+	Dim sourceSegments,targetSegments,notes As List
 	sourceSegments.Initialize
 	targetSegments.Initialize
+	notes.Initialize
 	For i=0 To segmentsForIteration.Size-1
 		Log(i)
 		Dim segment As List
@@ -34,10 +35,18 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String)
 		Dim source,target As String
 		source=segment.Get(0)
 		target=segment.Get(1)
+		
 		Dim langPair As Map=ProjectFile.Get("langPair")
+		Dim index As Int=0
 		For Each sentence As String In segmentation.segmentedTxt(source,False,langPair.Get("source"),srxPath,True)
 			If sentence.Trim<>"" Then
 				sourceSegments.Add(sentence.Trim)
+				If index=0 Then
+					notes.Add(segment.Get(2))
+				Else
+					notes.Add("")
+				End If
+				index=index+1
 			End If
 		Next
 		For Each sentence As String In segmentation.segmentedTxt(target,False,langPair.Get("target"),srxPath,False)
@@ -52,6 +61,7 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String)
 		else if targetSegments.Size>sourceSegments.Size Then
 			For j=1 To targetSegments.Size-sourceSegments.Size
 				sourceSegments.Add("")
+				notes.Add("")
 			Next
 		End If
 	Next
@@ -59,14 +69,19 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String)
 	result.Initialize
 	result.Put("source",sourceSegments)
 	result.Put("target",targetSegments)
+	result.Put("notes",notes)
 	loadItemsToSegments(result)
 End Sub
 
 Public Sub loadItemsToSegments(result As Map)
 	segments.Clear
-	Dim sourceSegments,targetSegments As List
+	Dim sourceSegments,targetSegments,notes As List
 	sourceSegments=result.Get("source")
 	targetSegments=result.Get("target")
+	notes.Initialize
+	If result.ContainsKey("notes") Then
+		notes=result.Get("notes")
+	End If
 	For i=0 To Max(sourceSegments.Size-1,targetSegments.size-1)
 		Dim segment As List
 		segment.Initialize
@@ -77,6 +92,11 @@ Public Sub loadItemsToSegments(result As Map)
 		End If
 		If i<=targetSegments.Size-1 Then
 			segment.Add(targetSegments.Get(i))
+		Else
+			segment.Add("")
+		End If
+		If i<=notes.Size-1 Then
+			segment.Add(notes.Get(i))
 		Else
 			segment.Add("")
 		End If
