@@ -67,7 +67,7 @@ Sub LanguageHasSpace(lang As String) As Boolean
 	Dim languagesWithoutSpaceList As List
 	languagesWithoutSpaceList=File.ReadList(File.DirAssets,"languagesWithoutSpace.txt")
 	For Each code As String In languagesWithoutSpaceList
-		If lang.StartsWith(code) Then
+		If lang.ToLowerCase.StartsWith(code) Then
 			Return False
 		End If
 	Next
