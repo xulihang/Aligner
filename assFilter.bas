@@ -87,6 +87,6 @@ Sub readDialogs(path As String) As List
 End Sub
 
 Sub cleanText(text As String) As String
-	text=Regex.Replace("\{.*?\}",text,"")
+	text=Regex.Replace("\{.*?\}",text," ")
 	Return text
 End Sub
