@@ -20,7 +20,11 @@ Sub getBitext(text As String,langPair As Map,highPrecisionForZH As Boolean) As M
 	result.Initialize
 	Dim lines As List
 	lines.Initialize
-	lines.AddAll(Regex.Split(CRLF,text))
+	For Each line As String In Regex.Split(CRLF,text)
+		If line.Trim<>"" Then
+			lines.Add(line)
+		End If
+	Next
 	Dim sourceLines As List
 	sourceLines.Initialize
 	Dim targetLines As List
