@@ -58,6 +58,6 @@ ModuleClosedNodes6=
 ModuleClosedNodes7=
 ModuleClosedNodes8=
 ModuleClosedNodes9=
-NavigationStack=Utils,getBitext,20,6,Bleualign,Class_Globals,1,0,Visual Designer,main.bjl,-100,2,Bleualign,Initialize,6,0,Main,AppStart,23,6,Project,Class_Globals,3,0,Project,loadSegmentsInSentenceLevel,27,0,Bleualign,Align,10,6,Main,ReAlignWithBleualign,149,6,Main,MenuBar1_Action,120,6
+NavigationStack=Project,Class_Globals,3,0,Project,loadSegmentsInSentenceLevel,27,0,Main,ReAlignWithBleualign,149,6,Visual Designer,main.bjl,-100,6,Main,exportToTxt,241,0,Main,MenuBar1_Action,124,6,Main,exportSourceToTxt,242,6,Main,exportToTMX,218,0,Bleualign,Align,11,6,Bleualign,EmptyItemsRemoved,43,3
 SelectedBuild=0
 VisibleModules=1,2,3,4,5,6,7,8,9,10,19

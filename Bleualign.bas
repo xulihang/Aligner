@@ -14,6 +14,9 @@ Public Sub Initialize
 End Sub
 
 Public Sub Align(sourceList As List,targetList As List,translationList As List) As ResumableSub
+	File.WriteList(File.DirApp,"source.txt",EmptyItemsRemoved(sourceList))
+	File.WriteList(File.DirApp,"target.txt",EmptyItemsRemoved(targetList))
+	File.WriteList(File.DirApp,"sourcetranslation.txt",EmptyItemsRemoved(translationList))
 	Dim sh As Shell
 	Dim executable As String="python"
 	Dim bleualighPath As String=File.Combine(File.Combine(File.DirApp,"bleualign"),"bleualign.py")
@@ -36,4 +39,14 @@ Public Sub Align(sourceList As List,targetList As List,translationList As List) 
 	Return result
 End Sub
 
+Sub EmptyItemsRemoved(list1 As List) As List
+	Dim new As List
+	new.Initialize
+	For Each item As String In list1
+		If item<>"" Then
+			new.Add(item)
+		End If
+	Next
+	return new
+End Sub
 

@@ -175,11 +175,13 @@ Sub MenuBar1_Action
 				currentProject.loadSegmentsInSentenceLevel(srxPath)
 				loadSegmentsToListView
 			End If
-		Case "_Bleualign"
+		Case "Align"
 			If currentProject.IsInitialized Then
 				wait for (ReAlignWithBleualign) Complete (temp As Object)
 				loadSegmentsToListView
 			End If
+		Case "Export Source to TXT for Translation"
+			exportSourceToTxt
 	End Select
 End Sub
 
@@ -286,6 +288,30 @@ Sub exportToTMX
 			langPair=currentProject.getProjectFileValue("langPair")
 			'TMX.export(segments,langPair.Get("source"),langPair.Get("target"),path,False,False)
 			TMX.exportQuick(segments,langPair.Get("source"),langPair.Get("target"),path)
+			fx.Msgbox(MainForm,"Done.","")
+		End If
+	End If
+End Sub
+
+Sub exportSourceToTxt
+	If currentProject.IsInitialized Then
+		If currentProject.segments.Size<>0 Then
+			Dim fc As FileChooser
+			fc.Initialize
+			fc.SetExtensionFilter("Txt",Array As String("*.txt"))
+			Dim path As String = fc.ShowSave(MainForm)
+			If path="" Then
+				Return
+			End If
+			Dim sourceList As List
+			sourceList.Initialize
+			For Each segment As List In currentProject.segments
+				Dim source As String=segment.Get(0)
+				If source<>"" Then
+					sourceList.Add(source)
+				End If
+			Next
+			File.WriteList(path,"",sourceList)
 			fx.Msgbox(MainForm,"Done.","")
 		End If
 	End If
