@@ -24,6 +24,7 @@ FileGroup8=Default Group
 FileGroup9=Default Group
 Group=Default Group
 Library1=jcore
+Library10=jshell
 Library2=jfx
 Library3=javaobject
 Library4=jxmlsax
@@ -42,6 +43,7 @@ Module15=POIWord
 Module16=XMLUtils
 Module17=Map2Xml
 Module18=Xml2Map
+Module19=Bleualign
 Module2=BiTextFilesPicker
 Module3=SrxPicker
 Module4=LanguagePairSelector
@@ -51,8 +53,8 @@ Module7=icu4j
 Module8=segmentation
 Module9=SRX
 NumberOfFiles=11
-NumberOfLibraries=9
-NumberOfModules=18
+NumberOfLibraries=10
+NumberOfModules=19
 Version=7.8
 @EndOfDesignText@
 #Region Project Attributes 
@@ -79,7 +81,6 @@ Sub AppStart (Form1 As Form, Args() As String)
 	MainForm.RootPane.LoadLayout("main") 'Load the layout file.
 	MainForm.Show
 	addScrollChangedEvent(editorLV)
-
 End Sub
 
 'Return true to allow the default exceptions handler to handle the uncaught exception.
@@ -174,7 +175,56 @@ Sub MenuBar1_Action
 				currentProject.loadSegmentsInSentenceLevel(srxPath)
 				loadSegmentsToListView
 			End If
+		Case "_Bleualign"
+			If currentProject.IsInitialized Then
+				wait for (ReAlignWithBleualign) Complete (temp As Object)
+				loadSegmentsToListView
+			End If
 	End Select
+End Sub
+
+Sub ReAlignWithBleualign As ResumableSub
+	Dim fc As FileChooser
+	fc.Initialize
+	fc.SetExtensionFilter("txt", Array As String("*.txt"))
+	fc.Title="Please select the translation file"
+	Dim path As String=fc.ShowOpen(MainForm)
+	If File.Exists(path,"") Then
+		Dim translationList As List=File.ReadList(path,"")
+		Dim segments As List=currentProject.segments
+		Dim sourceList,targetList As List
+		sourceList.Initialize
+		targetList.Initialize
+		For Each segment As List In segments
+			Dim source,target As String
+			source=segment.Get(0)
+			target=segment.Get(1)
+			If source<>"" Then
+				sourceList.Add(source)
+			End If
+			If target<>"" Then
+				targetList.Add(target)
+			End If
+		Next
+		Dim ba As Bleualign
+		ba.Initialize
+		wait for (ba.Align(sourceList,targetList,translationList)) Complete (result As Map)
+		If result.Get("success") Then
+			segments.Clear
+			sourceList=result.Get("sourceList")
+			targetList=result.Get("targetList")
+			Dim index As Int=0
+			For Each item As String In sourceList
+				Dim segment As List
+				segment.Initialize
+				segment.Add(item)
+				segment.Add(targetList.Get(index))
+				index=index+1
+				segments.Add(segment)
+			Next
+		End If
+	End If
+	Return ""
 End Sub
 
 Sub exportToDocx
