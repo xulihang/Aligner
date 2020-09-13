@@ -18,7 +18,9 @@ Public Sub Initialize(projectPath As String)
 	path=projectPath
 End Sub
 
-Public Sub loadSegmentsInSentenceLevel(srxPath As String)
+Public Sub loadSegmentsInSentenceLevel(srxPath As String) As ResumableSub
+	Log("segmenting...")
+	Log(srxPath)
 	Dim segmentsForIteration As List
 	segmentsForIteration.Initialize
 	segmentsForIteration.AddAll(segments)
@@ -38,7 +40,8 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String)
 		
 		Dim langPair As Map=ProjectFile.Get("langPair")
 		Dim index As Int=0
-		For Each sentence As String In segmentation.segmentedTxt(source,False,langPair.Get("source"),srxPath,True)
+		wait for (segmentation.segmentedTxt(source,True,langPair.Get("source"),srxPath,True)) Complete (segmented As List)
+		For Each sentence As String In segmented
 			If sentence.Trim<>"" Then
 				sourceSegments.Add(sentence.Trim)
 				If index=0 Then
@@ -49,7 +52,8 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String)
 				index=index+1
 			End If
 		Next
-		For Each sentence As String In segmentation.segmentedTxt(target,False,langPair.Get("target"),srxPath,False)
+		Wait For (segmentation.segmentedTxt(target,True,langPair.Get("target"),srxPath,False)) Complete (segmented As List)
+		For Each sentence As String In segmented
 			If sentence.Trim<>"" Then
 				targetSegments.Add(sentence.Trim)
 			End If
@@ -71,6 +75,7 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String)
 	result.Put("target",targetSegments)
 	result.Put("notes",notes)
 	loadItemsToSegments(result)
+	return ""
 End Sub
 
 Public Sub loadItemsToSegments(result As Map)

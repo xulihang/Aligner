@@ -47,6 +47,6 @@ Sub EmptyItemsRemoved(list1 As List) As List
 			new.Add(item)
 		End If
 	Next
-	return new
+	Return new
 End Sub
 

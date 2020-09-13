@@ -58,6 +58,6 @@ ModuleClosedNodes6=
 ModuleClosedNodes7=
 ModuleClosedNodes8=
 ModuleClosedNodes9=
-NavigationStack=Project,Class_Globals,3,0,Project,loadSegmentsInSentenceLevel,27,0,Main,ReAlignWithBleualign,149,6,Visual Designer,main.bjl,-100,6,Main,exportToTxt,241,0,Main,MenuBar1_Action,124,6,Main,exportSourceToTxt,242,6,Main,exportToTMX,218,0,Bleualign,Align,11,6,Bleualign,EmptyItemsRemoved,43,3
+NavigationStack=segmentation,paragraphInSegments,68,0,SrxPicker,Class_Globals,0,0,SrxPicker,ShowAndWait,14,1,Project,Initialize,12,0,segmentation,segmentedTxt,40,4,segmentation,Process_Globals,7,2,Project,loadSegmentsInSentenceLevel,44,6,SRX,readRules,6,0,segmentation,readRules,32,6,Main,MenuBar1_Action,40,4
 SelectedBuild=0
 VisibleModules=1,2,3,4,5,6,7,8,9,10,19

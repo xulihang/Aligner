@@ -97,7 +97,7 @@ Sub MenuBar1_Action
 	mi=Sender
 	Select mi.Text
 		Case "_About"
-			fx.Msgbox(MainForm,"Aligner"&CRLF&"@xulihang 2019","About")
+			fx.Msgbox(MainForm,"Aligner"&CRLF&"@xulihang 2020","About")
 		Case "_Exit"
 			ExitApplication
 		Case "_New"
@@ -172,7 +172,7 @@ Sub MenuBar1_Action
 				Dim srxfilePicker As SrxPicker
 				srxfilePicker.Initialize
 				Dim srxPath As String=srxfilePicker.ShowAndWait
-				currentProject.loadSegmentsInSentenceLevel(srxPath)
+				wait for (currentProject.loadSegmentsInSentenceLevel(srxPath)) Complete (temp As Object)
 				loadSegmentsToListView
 			End If
 		Case "Align"
