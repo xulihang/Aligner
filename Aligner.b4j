@@ -1,19 +1,21 @@
 ﻿AppType=JavaFX
 Build1=Default,b4j.example
 File1=aligner.png
-File10=splitterChooser.bjl
-File11=srxPicker.bjl
+File10=segmentationRules.srx
+File11=splitterChooser.bjl
+File12=srxPicker.bjl
 File2=AssPicker.bjl
 File3=BiTextFilesPicker.bjl
 File4=LangaugePairSelector.bjl
 File5=langcodes.txt
 File6=languagesWithoutSpace.txt
 File7=main.bjl
-File8=segment.bjl
-File9=segmentationRules.srx
+File8=progress.bjl
+File9=segment.bjl
 FileGroup1=Default Group
 FileGroup10=Default Group
 FileGroup11=Default Group
+FileGroup12=Default Group
 FileGroup2=Default Group
 FileGroup3=Default Group
 FileGroup4=Default Group
@@ -45,6 +47,7 @@ Module17=XMLUtils
 Module18=Map2Xml
 Module19=Xml2Map
 Module2=BiTextFilesPicker
+Module20=progressDialog
 Module3=SrxPicker
 Module4=LanguagePairSelector
 Module5=Utils
@@ -52,9 +55,9 @@ Module6=txtFilter
 Module7=icu4j
 Module8=segmentation
 Module9=SRX
-NumberOfFiles=11
+NumberOfFiles=12
 NumberOfLibraries=10
-NumberOfModules=19
+NumberOfModules=20
 Version=7.8
 @EndOfDesignText@
 #Region Project Attributes 
@@ -186,47 +189,156 @@ Sub MenuBar1_Action
 End Sub
 
 Sub ReAlignWithBleualign As ResumableSub
+	Dim response As Int=fx.Msgbox2(MainForm,"Align paragraph by paragraph (works when segments are aligned in paragraph level)?","","Yes","Cancel","No",fx.MSGBOX_CONFIRMATION)
+	Dim AlignInParagraphs As Boolean
+	If response=fx.DialogResponse.CANCEL Then
+		Return ""
+	End If
+	If response=fx.DialogResponse.POSITIVE Then
+		AlignInParagraphs=True
+	Else
+		AlignInParagraphs=False
+	End If
 	Dim fc As FileChooser
 	fc.Initialize
 	fc.SetExtensionFilter("txt", Array As String("*.txt"))
 	fc.Title="Please select the translation file"
 	Dim path As String=fc.ShowOpen(MainForm)
 	If File.Exists(path,"") Then
-		Dim translationList As List=File.ReadList(path,"")
-		Dim segments As List=currentProject.segments
-		Dim sourceList,targetList As List
-		sourceList.Initialize
-		targetList.Initialize
-		For Each segment As Map In segments
-			Dim source,target As String
-			source=segment.Get("source")
-			target=segment.Get("target")
-			If source<>"" Then
-				sourceList.Add(source)
+		Dim segments As List
+		segments.Initialize
+		segments.AddAll(currentProject.segments)
+		
+		Dim translationListALL As List=File.ReadList(path,"")
+		Dim appended As Boolean=appendTranslations(segments,translationListALL)
+		If appended=False Then
+			fx.Msgbox(MainForm,"Translation and source text are not aligned","")
+			Return ""
+		End If
+		
+		Dim newSegments As List
+		newSegments.Initialize
+		
+
+		
+		Dim paragraphs As List
+		If AlignInParagraphs Then
+			paragraphs=segmentsInParagraphs(segments)
+		Else
+			paragraphs.Initialize
+			paragraphs.Add(segments)
+		End If
+		progressDialog.Show("Aligning...","align")
+		Dim paragraphNum As Int
+		For Each paragraph As List In paragraphs
+			paragraphNum=paragraphNum+1
+			progressDialog.update(paragraphNum,paragraphs.Size)
+			If paragraph.Size<=1 Then
+				newSegments.AddAll(paragraph)
+				Continue
 			End If
-			If target<>"" Then
-				targetList.Add(target)
+			Dim sourceList,targetList,translationList As List
+			sourceList.Initialize
+			targetList.Initialize
+			translationList.Initialize
+			For Each segment As Map In paragraph
+				Dim source,target,translation As String
+				source=segment.Get("source")
+				target=segment.Get("target")
+				translation=segment.Get("alt-translation")
+				If source<>"" Then
+					sourceList.Add(source)
+				End If
+				If target<>"" Then
+					targetList.Add(target)
+				End If
+				If translation<>"" Then
+					translationList.Add(translation)
+				End If
+			Next
+			
+			Dim ba As Bleualign
+			ba.Initialize
+			wait for (ba.Align(sourceList,targetList,translationList)) Complete (result As Map)
+			If result.Get("success") Then
+				sourceList=result.Get("sourceList")
+				targetList=result.Get("targetList")
+				Dim index As Int=0
+				For Each item As String In sourceList
+					Dim segment As Map
+					segment.Initialize
+					segment.Put("source",item)
+					segment.Put("target",targetList.Get(index))
+					index=index+1
+					newSegments.Add(segment)
+				Next
+			Else
+				newSegments.AddAll(paragraph)
 			End If
 		Next
-		Dim ba As Bleualign
-		ba.Initialize
-		wait for (ba.Align(sourceList,targetList,translationList)) Complete (result As Map)
-		If result.Get("success") Then
-			segments.Clear
-			sourceList=result.Get("sourceList")
-			targetList=result.Get("targetList")
-			Dim index As Int=0
-			For Each item As String In sourceList
-				Dim segment As Map
-				segment.Initialize
-				segment.Put("source",item)
-				segment.Put("target",targetList.Get(index))
-				index=index+1
-				segments.Add(segment)
-			Next
-		End If
+		currentProject.segments.Clear
+		currentProject.segments.AddAll(newSegments)
+		progressDialog.close
 	End If
 	Return ""
+End Sub
+
+Sub appendTranslations(segments As List,translationList As List) As Boolean
+	Dim new As List
+	new.Initialize
+	new.Addall(segments)
+	Dim initTranslationSize As Int=translationList.Size
+	Dim index As Int=0
+	For Each segment As Map In new
+		Dim source As String=segment.Get("source")
+		If source<>"" Then
+			If translationList.Size>0 Then
+				Dim translation As String=translationList.Get(0)
+				segment.Put("alt-translation",translation)
+				translationList.RemoveAt(0)
+			Else
+				Return False
+			End If
+			index=index+1
+		End If
+	Next
+	Log(index)
+	Log(initTranslationSize)
+	If index=initTranslationSize Then
+		segments.Clear
+		segments.AddAll(new)
+		Log("translatoin is correct")
+		Return True
+	End If
+	Return False
+End Sub
+
+Sub segmentsInParagraphs(segments As List) As List
+	If segments.Size>0 Then
+		Dim segment As Map =segments.Get(0)
+		If segment.ContainsKey("id")=False Then
+			Return segments
+		End If
+	End If
+	Dim paragraphs As List
+	paragraphs.Initialize
+	Dim previousID As Int=0
+	Dim paragraphSegments As List
+	paragraphSegments.Initialize
+	Dim index As Int=0
+	For Each segment As Map In segments
+        If segment.Get("id")<>previousID Or index=segments.Size-1 Then
+			previousID=segment.Get("id")
+			Dim new As List
+			new.Initialize
+			new.AddAll(paragraphSegments)
+			paragraphs.Add(new)
+			paragraphSegments.Clear
+        End If
+		paragraphSegments.Add(segment)
+		index=index+1
+	Next
+	Return paragraphs
 End Sub
 
 Sub exportToDocx
