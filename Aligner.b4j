@@ -328,7 +328,6 @@ Sub segmentsInParagraphs(segments As List) As List
 	Dim previousID As Int=0
 	Dim paragraphSegments As List
 	paragraphSegments.Initialize
-	Dim index As Int=0
 	For Each segment As Map In segments
         If segment.Get("id")<>previousID Then
 			previousID=segment.Get("id")
@@ -339,7 +338,6 @@ Sub segmentsInParagraphs(segments As List) As List
 			paragraphSegments.Clear
         End If
 		paragraphSegments.Add(segment)
-		index=index+1
 	Next
 	If paragraphSegments.Size<>0 Then ' last paragraph
 		paragraphs.Add(paragraphSegments)
@@ -922,6 +920,10 @@ Sub splitSegment(TextArea As TextArea,isSource As Boolean)
 	nextbitext.Put("source","")
 	nextbitext.Put("target","")
 	nextbitext.Put("note","")
+	If bitext.ContainsKey("id") Then
+		nextbitext.Put("id",bitext.Get("id"))
+	End If
+	
 
 	
 	Dim nextPane As Pane=createEmptyPane
