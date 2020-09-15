@@ -31,7 +31,7 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String) As ResumableSub
 	notes.Initialize
 	For i=0 To segmentsForIteration.Size-1
 		Log(i)
-		Dim segment As List
+		Dim segment As Map
 		segment.Initialize
 		segment=segmentsForIteration.Get(i)
 		Dim source,target As String
@@ -75,7 +75,7 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String) As ResumableSub
 	result.Put("target",targetSegments)
 	result.Put("notes",notes)
 	loadItemsToSegments(result)
-	return ""
+	Return ""
 End Sub
 
 Public Sub loadItemsToSegments(result As Map)
@@ -88,22 +88,22 @@ Public Sub loadItemsToSegments(result As Map)
 		notes=result.Get("notes")
 	End If
 	For i=0 To Max(sourceSegments.Size-1,targetSegments.size-1)
-		Dim segment As List
+		Dim segment As Map
 		segment.Initialize
 		If i<=sourceSegments.Size-1 Then
-			segment.Add(sourceSegments.Get(i))
+			segment.Put("source",sourceSegments.Get(i))
 		Else
-			segment.Add("")
+			segment.Put("source","")
 		End If
 		If i<=targetSegments.Size-1 Then
-			segment.Add(targetSegments.Get(i))
+			segment.Put("target",targetSegments.Get(i))
 		Else
-			segment.Add("")
+			segment.Put("target","")
 		End If
 		If i<=notes.Size-1 Then
-			segment.Add(notes.Get(i))
+			segment.Put("note",notes.Get(i))
 		Else
-			segment.Add("")
+			segment.Put("note","")
 		End If
 		segments.Add(segment)
 	Next

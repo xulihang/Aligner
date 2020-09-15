@@ -35,15 +35,15 @@ Library8=b4jdragtome
 Library9=jpoi
 Module1=Project
 Module10=TMX
-Module11=assFilter
-Module12=openxmlFilter
-Module13=AssPicker
-Module14=SplitterChooser
-Module15=POIWord
-Module16=XMLUtils
-Module17=Map2Xml
-Module18=Xml2Map
-Module19=Bleualign
+Module11=Bleualign
+Module12=assFilter
+Module13=openxmlFilter
+Module14=AssPicker
+Module15=SplitterChooser
+Module16=POIWord
+Module17=XMLUtils
+Module18=Map2Xml
+Module19=Xml2Map
 Module2=BiTextFilesPicker
 Module3=SrxPicker
 Module4=LanguagePairSelector
@@ -197,7 +197,7 @@ Sub ReAlignWithBleualign As ResumableSub
 		Dim sourceList,targetList As List
 		sourceList.Initialize
 		targetList.Initialize
-		For Each segment As List In segments
+		For Each segment As Map In segments
 			Dim source,target As String
 			source=segment.Get(0)
 			target=segment.Get(1)
@@ -217,10 +217,10 @@ Sub ReAlignWithBleualign As ResumableSub
 			targetList=result.Get("targetList")
 			Dim index As Int=0
 			For Each item As String In sourceList
-				Dim segment As List
+				Dim segment As Map
 				segment.Initialize
-				segment.Add(item)
-				segment.Add(targetList.Get(index))
+				segment.Put("source",item)
+				segment.Put("target",targetList.Get(index))
 				index=index+1
 				segments.Add(segment)
 			Next
@@ -241,7 +241,7 @@ Sub exportToDocx
 			End If
 			Dim rows As List
 			rows.Initialize
-			For Each segment As List In currentProject.segments
+			For Each segment As Map In currentProject.segments
 				Dim source,target,note As String
 				source=segment.Get(0)
 				target=segment.Get(1)
@@ -269,19 +269,19 @@ Sub exportToTMX
 
 			Dim segments As List
 			segments.Initialize
-			For Each segment As List In currentProject.segments
+			For Each segment As Map In currentProject.segments
 				Dim source,target,note As String
-				source=segment.Get(0)
-				target=segment.Get(1)
-				note=segment.Get(2)
+				source=segment.Get("source")
+				target=segment.Get("target")
+				note=segment.GetDefault("note","")
 				If source="" Or target="" Then
 					Continue
 				End If
-				Dim bitext As List
+				Dim bitext As Map
 				bitext.Initialize
-				bitext.Add(source)
-				bitext.Add(target)
-				bitext.Add(note)
+				bitext.Put("source",source)
+				bitext.Put("target",target)
+				bitext.Put("note",note)
 				segments.Add(bitext)
 			Next
 			Dim langPair As Map
@@ -305,7 +305,7 @@ Sub exportSourceToTxt
 			End If
 			Dim sourceList As List
 			sourceList.Initialize
-			For Each segment As List In currentProject.segments
+			For Each segment As Map In currentProject.segments
 				Dim source As String=segment.Get(0)
 				If source<>"" Then
 					sourceList.Add(source)
@@ -334,7 +334,7 @@ Sub exportToTxt
 			End If
 			Dim result As StringBuilder
 			result.Initialize
-			For Each segment As List In currentProject.segments
+			For Each segment as map In currentProject.segments
 				Dim source,target,note As String
 				source=segment.Get(0)
 				target=segment.Get(1)
@@ -595,9 +595,9 @@ Public Sub fillPane(FirstIndex As Int, LastIndex As Int)
 
 				Dim segmentPane As Pane
 				segmentPane=createEmptyPane
-				Dim bitext As List
+				Dim bitext As Map
 				bitext=segments.Get(i)
-				addTextAreaToSegmentPane(segmentPane,bitext.Get(0),bitext.Get(1))
+				addTextAreaToSegmentPane(segmentPane,bitext.Get("source"),bitext.Get("target"))
 				editorLV.Items.Set(i,segmentPane)
 			End If
 		Else
@@ -721,10 +721,13 @@ Sub mergeSegment(TextArea As TextArea,isSource As Boolean)
 	If index+1>currentProject.segments.Size-1 Then
 		Return
 	End If
+	Dim key As String
 	Dim textIndex As Int
 	If isSource Then
-	    textIndex=0
+		key="source"
+		textIndex=0
 	Else
+		key="target"
 		textIndex=1
 	End If
 	
@@ -735,10 +738,10 @@ Sub mergeSegment(TextArea As TextArea,isSource As Boolean)
 	
 
 	nextTa.Text=""
-	Dim bitext As List
-	Dim nextBitext As List
+	Dim bitext As Map
+	Dim nextbitext As Map
 	bitext=currentProject.segments.Get(index)
-	nextBitext=currentProject.segments.Get(index+1)
+	nextbitext=currentProject.segments.Get(index+1)
 	
 	Dim whiteSpace As String
 	Dim lang As String
@@ -754,10 +757,10 @@ Sub mergeSegment(TextArea As TextArea,isSource As Boolean)
 		whiteSpace=""
 	End If
 	
-	TextArea.Text=bitext.Get(textIndex)&whiteSpace&nextBitext.Get(textIndex)
+	TextArea.Text=bitext.Get(key)&whiteSpace&nextbitext.Get(key)
 	TextArea.Text=TextArea.Text.Trim
-	bitext.Set(textIndex,TextArea.Text)
-	nextBitext.Set(textIndex,"")
+	bitext.Put(key,TextArea.Text)
+	nextbitext.Put(key,"")
 	
 
 	Dim theOtherIndex As Int
@@ -775,9 +778,12 @@ Sub splitSegment(TextArea As TextArea,isSource As Boolean)
 	Dim index As Int
 	index=editorLV.Items.IndexOf(TextArea.Parent)
 	Dim textIndex As Int
+	Dim key As String
 	If isSource Then
+		key="source"
 		textIndex=0
 	Else
+		key="target"
 		textIndex=1
 	End If
 	
@@ -789,15 +795,15 @@ Sub splitSegment(TextArea As TextArea,isSource As Boolean)
 	
 	TextArea.Text=text
 	
-	Dim bitext As List
-	Dim nextBitext As List
+	Dim bitext As Map
+	Dim nextbitext As Map
 	bitext=currentProject.segments.Get(index)
-	bitext.Set(textIndex,text)
+	bitext.Put(key,text)
 
-	nextBitext.Initialize
-	nextBitext.Add("")
-	nextBitext.Add("")
-	nextBitext.Add("")
+	nextbitext.Initialize
+	nextbitext.Put("source","")
+	nextbitext.Put("target","")
+	nextbitext.Put("note","")
 
 	
 	Dim nextPane As Pane=createEmptyPane
@@ -810,12 +816,12 @@ Sub splitSegment(TextArea As TextArea,isSource As Boolean)
 		nextTarget=nextText
 		nextSource=""
 	End If
-	nextBitext.Set(0,nextSource)
-	nextBitext.Set(1,nextTarget)
+	nextbitext.Put("source",nextSource)
+	nextbitext.Put("target",nextTarget)
 	If nextSource="" And nextTarget="" Then
 		Log("empty pair")
 	Else
-		currentProject.segments.InsertAt(index+1,nextBitext)
+		currentProject.segments.InsertAt(index+1,nextbitext)
 		addTextAreaToSegmentPane(nextPane,nextSource,nextTarget)
 		editorLV.Items.InsertAt(index+1,nextPane)
 	End If
@@ -831,8 +837,8 @@ Sub targetTextArea_TextChanged (Old As String, New As String)
 	Try
 		Dim p As Pane=TextArea1.Parent
 		Dim index As Int= editorLV.Items.IndexOf(p)
-		Dim bitext As List=currentProject.segments.get(index)
-		bitext.Set(1,New)
+		Dim bitext As Map=currentProject.segments.get(index)
+		bitext.Put("target",New)
 	Catch
 		Log(LastException)
 	End Try
@@ -844,8 +850,8 @@ Sub sourceTextArea_TextChanged (Old As String, New As String)
 	Try
 		Dim p As Pane=TextArea1.Parent
 		Dim index As Int= editorLV.Items.IndexOf(p)
-		Dim bitext As List=currentProject.segments.get(index)
-		bitext.Set(0,New)
+		Dim bitext As Map=currentProject.segments.get(index)
+		bitext.Put("source",New)
 	Catch
 		Log(LastException)
 	End Try
@@ -916,7 +922,7 @@ Sub viewnotemi_Action
 	Dim p As Pane
 	p=ta.Parent
 	Dim index As Int=editorLV.Items.IndexOf(p)
-	Dim segment As List=currentProject.segments.Get(index)
+	Dim segment As Map=currentProject.segments.Get(index)
 	fx.Msgbox(MainForm,segment.Get(2),"Note")
 End Sub
 
@@ -927,10 +933,13 @@ Sub moveCell(isSource As Boolean,ta As TextArea,isUP As Boolean)
 	Dim index As Int=editorLV.Items.IndexOf(p)
 	
 	Dim taIndex As Int
+	Dim key As String
 	If isSource Then
 		taIndex=0
+		key="source"
 	Else
 		taIndex=1
+		key="target"
 	End If
 	
 	Dim theOtherIndex As Int
@@ -943,22 +952,22 @@ Sub moveCell(isSource As Boolean,ta As TextArea,isUP As Boolean)
 		Return
 	End If
 
-	Dim bitext,theOtherBitext As List
+	Dim bitext,theOtherbitext As Map
 	bitext=currentProject.segments.Get(index)
-	theOtherBitext=currentProject.segments.Get(theOtherIndex)
-	Dim temp As String=bitext.Get(taIndex)
-	bitext.Set(taIndex,theOtherBitext.Get(taIndex))
-	theOtherBitext.Set(taIndex,temp)
+	theOtherbitext=currentProject.segments.Get(theOtherIndex)
+	Dim temp As String=bitext.Get(key)
+	bitext.Put(key,theOtherbitext.Get(key))
+	theOtherbitext.Put(key,temp)
 
 
-	ta.Text=bitext.Get(taIndex)
+	ta.Text=bitext.Get(key)
 
 	If editorLV.Items.Get(theOtherIndex)<>"" Then
 		Dim theOtherPane As Pane
 		theOtherPane=editorLV.Items.Get(theOtherIndex)
 		Dim theOtherTa As TextArea
 		theOtherTa=theOtherPane.GetNode(taIndex)
-		theOtherTa.Text=theOtherBitext.Get(taIndex)
+		theOtherTa.Text=theOtherbitext.Get(key)
 	End If
 	
 End Sub
@@ -979,10 +988,13 @@ Sub deleteCell(isSource As Boolean,ta As TextArea)
 	p=ta.Parent
 	
 	Dim taIndex As Int
+	Dim key As String
 	If isSource Then
 		taIndex=0
+		key="source"
 	Else
 		taIndex=1
+		key="target"
 	End If
 	Dim theOtherIndex As Int
 	theOtherIndex=getTheOtherIndex(taIndex)
@@ -995,32 +1007,32 @@ Sub deleteCell(isSource As Boolean,ta As TextArea)
 
 	For i=index To size-2
 		Dim nextIndex As Int=i+1
-		Dim bitext As List
+		Dim bitext As Map
 		bitext=currentProject.segments.Get(i)
-        Dim nextBitext As List
-		nextBitext=currentProject.segments.Get(nextIndex)
-		bitext.Set(taIndex,nextBitext.Get(taIndex))
+        Dim nextbitext As Map
+		nextbitext=currentProject.segments.Get(nextIndex)
+		bitext.Put(key,nextbitext.Get(key))
 		
 		If editorLV.Items.Get(i)<>"" Then 
 			Dim p As Pane
 			Dim ta As TextArea
 			p=editorLV.Items.Get(i)
 			ta=p.GetNode(taIndex)
-			ta.Text=bitext.Get(taIndex)
+			ta.Text=bitext.Get(key)
 		End If
         If editorLV.Items.Get(nextIndex)<>"" Then
 			Dim nextPane As Pane
 			nextPane=editorLV.Items.Get(nextIndex)
 			Dim nextTa As TextArea
 			nextTa=nextPane.GetNode(taIndex)
-			nextTa.Text=nextBitext.Get(taIndex)
+			nextTa.Text=nextbitext.Get(key)
 		End If
 	Next
 	
 	'set the last segment empty
-	Dim bitext As List
+	Dim bitext As Map
 	bitext=currentProject.segments.Get(size-1)
-	bitext.Set(taIndex,"")
+	bitext.put(key,"")
 	If editorLV.Items.Get(size-1)<>"" Then
 		Dim p As Pane
 		p=editorLV.Items.Get(size-1)
@@ -1032,8 +1044,8 @@ Sub deleteCell(isSource As Boolean,ta As TextArea)
 	Dim toRemoveIndexList As List
 	toRemoveIndexList.Initialize
 	Dim index As Int=0
-	For Each bitext As List In currentProject.segments
-		If bitext.Get(0)="" And bitext.Get(1)="" Then
+	For Each bitext As Map In currentProject.segments
+		If bitext.Get("source")="" And bitext.Get("target")="" Then
 			toRemoveIndexList.Add(index)
 		End If
 		index=index+1
@@ -1043,7 +1055,6 @@ Sub deleteCell(isSource As Boolean,ta As TextArea)
 		currentProject.segments.RemoveAt(index)
 		editorLV.Items.RemoveAt(index)
     Next
-	
 End Sub
 
 

@@ -119,29 +119,6 @@ Sub readLanguageCode(codesfilePath As String) As Map
 	Return langcodes
 End Sub
 
-Sub shouldAddSpace(sourceLang As String,targetLang As String,index As Int,segmentsList As List) As Boolean
-	Dim bitext As List=segmentsList.Get(index)
-	Dim fullsource As String=bitext.Get(2)
-
-	If LanguageHasSpace(sourceLang)=False And LanguageHasSpace(targetLang)=True Then
-		If index+1<=segmentsList.Size-1 Then
-			Dim nextBitext As List
-			nextBitext=segmentsList.Get(index+1)
-			Dim nextfullsource As String=nextBitext.Get(2)
-			If fullsource.EndsWith(CRLF)=False And nextfullsource.StartsWith(CRLF)=False Then
-				Try
-					If Regex.IsMatch("\s",nextfullsource.CharAt(0))=False And Regex.IsMatch("\s",fullsource.CharAt(fullsource.Length-1))=False Then
-						Return True
-					End If
-				Catch
-					Log(LastException)
-				End Try
-			End If
-		End If
-	End If
-	Return False
-End Sub
-
 Sub MeasureMultilineTextHeight (Font As Font, Width As Double, Text As String) As Double
 	Dim jo As JavaObject = Me
 	Return jo.RunMethod("MeasureMultilineTextHeight", Array(Font, Text, Width))

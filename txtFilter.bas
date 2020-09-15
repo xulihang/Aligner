@@ -39,25 +39,3 @@ Sub getBitext(path As String,langPair As Map,highPrecisionForZH As Boolean) As M
 	Return Utils.getBitext(text,langPair,highPrecisionForZH)
 End Sub
 
-
-Sub shouldAddSpace(sourceLang As String,targetLang As String,index As Int,segmentsList As List) As Boolean
-	Dim bitext As List=segmentsList.Get(index)
-	Dim fullsource As String=bitext.Get(2)
-	If Utils.LanguageHasSpace(sourceLang)=False And Utils.LanguageHasSpace(targetLang)=True Then
-		If index+1<=segmentsList.Size-1 Then
-			Dim nextBitext As List
-			nextBitext=segmentsList.Get(index+1)
-			Dim nextfullsource As String=nextBitext.Get(2)
-			If fullsource.EndsWith(CRLF)=False And nextfullsource.StartsWith(CRLF)=False Then
-				Try
-					If Regex.IsMatch("\s",nextfullsource.CharAt(0))=False And Regex.IsMatch("\s",fullsource.CharAt(fullsource.Length-1))=False Then
-						Return True
-					End If
-				Catch
-					Log(LastException)
-				End Try
-			End If
-		End If
-	End If
-	Return False
-End Sub
