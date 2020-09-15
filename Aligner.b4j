@@ -261,6 +261,7 @@ Sub ReAlignWithBleualign As ResumableSub
 			ba.Initialize
 			wait for (ba.Align(sourceList,targetList,translationList)) Complete (result As Map)
 			If result.Get("success") Then
+				Log("success")
 				sourceList=result.Get("sourceList")
 				targetList=result.Get("targetList")
 				Dim index As Int=0
@@ -269,10 +270,12 @@ Sub ReAlignWithBleualign As ResumableSub
 					segment.Initialize
 					segment.Put("source",item)
 					segment.Put("target",targetList.Get(index))
+					segment.Put("id",(paragraphNum-1))
 					index=index+1
 					newSegments.Add(segment)
 				Next
 			Else
+				Log("failed")
 				newSegments.AddAll(paragraph)
 			End If
 		Next
@@ -327,7 +330,7 @@ Sub segmentsInParagraphs(segments As List) As List
 	paragraphSegments.Initialize
 	Dim index As Int=0
 	For Each segment As Map In segments
-        If segment.Get("id")<>previousID Or index=segments.Size-1 Then
+        If segment.Get("id")<>previousID Then
 			previousID=segment.Get("id")
 			Dim new As List
 			new.Initialize
@@ -338,6 +341,9 @@ Sub segmentsInParagraphs(segments As List) As List
 		paragraphSegments.Add(segment)
 		index=index+1
 	Next
+	If paragraphSegments.Size<>0 Then ' last paragraph
+		paragraphs.Add(paragraphSegments)
+	End If
 	Return paragraphs
 End Sub
 
