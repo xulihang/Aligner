@@ -18,6 +18,7 @@ Public Sub Initialize(projectPath As String)
 	path=projectPath
 End Sub
 
+' segment paragraphs into sentences
 Public Sub loadSegmentsInSentenceLevel(srxPath As String) As ResumableSub
 	Log("segmenting...")
 	Log(srxPath)
@@ -25,18 +26,19 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String) As ResumableSub
 	segmentsForIteration.Initialize
 	segmentsForIteration.AddAll(segments)
 	segments.Clear
-	Dim sourceSegments,targetSegments,notes As List
+	Dim sourceSegments,targetSegments,notes,ids As List
 	sourceSegments.Initialize
 	targetSegments.Initialize
 	notes.Initialize
+	ids.Initialize
 	For i=0 To segmentsForIteration.Size-1
-		Log(i)
+		'Log(i)
 		Dim segment As Map
 		segment.Initialize
 		segment=segmentsForIteration.Get(i)
 		Dim source,target As String
-		source=segment.Get(0)
-		target=segment.Get(1)
+		source=segment.Get("source")
+		target=segment.Get("target")
 		
 		Dim langPair As Map=ProjectFile.Get("langPair")
 		Dim index As Int=0
@@ -45,19 +47,21 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String) As ResumableSub
 			If sentence.Trim<>"" Then
 				sourceSegments.Add(sentence.Trim)
 				If index=0 Then
-					notes.Add(segment.Get(2))
+					notes.Add(segment.Get("note"))
 				Else
 					notes.Add("")
 				End If
 				index=index+1
 			End If
 		Next
+		
 		Wait For (segmentation.segmentedTxt(target,True,langPair.Get("target"),srxPath,False)) Complete (segmented As List)
 		For Each sentence As String In segmented
 			If sentence.Trim<>"" Then
 				targetSegments.Add(sentence.Trim)
 			End If
 		Next
+		
 		If targetSegments.Size<sourceSegments.Size Then
 			For j=1 To sourceSegments.Size-targetSegments.Size
 				targetSegments.Add("")
@@ -68,24 +72,36 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String) As ResumableSub
 				notes.Add("")
 			Next
 		End If
+		
+		For k=0 To sourceSegments.Size-1
+			ids.Add(i)
+		Next
+		
 	Next
 	Dim result As Map
 	result.Initialize
 	result.Put("source",sourceSegments)
 	result.Put("target",targetSegments)
 	result.Put("notes",notes)
+	result.Put("ids",ids)
 	loadItemsToSegments(result)
 	Return ""
 End Sub
 
 Public Sub loadItemsToSegments(result As Map)
 	segments.Clear
-	Dim sourceSegments,targetSegments,notes As List
+	Dim sourceSegments,targetSegments,notes,ids As List
 	sourceSegments=result.Get("source")
 	targetSegments=result.Get("target")
-	notes.Initialize
 	If result.ContainsKey("notes") Then
 		notes=result.Get("notes")
+	Else
+		notes.Initialize
+	End If
+	If result.ContainsKey("ids") Then
+		ids=result.Get("ids")
+	Else
+		ids.Initialize
 	End If
 	For i=0 To Max(sourceSegments.Size-1,targetSegments.size-1)
 		Dim segment As Map
@@ -104,6 +120,9 @@ Public Sub loadItemsToSegments(result As Map)
 			segment.Put("note",notes.Get(i))
 		Else
 			segment.Put("note","")
+		End If
+		If i<=ids.Size-1 Then
+			segment.Put("id",ids.Get(i))
 		End If
 		segments.Add(segment)
 	Next

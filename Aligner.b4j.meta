@@ -58,6 +58,6 @@ ModuleClosedNodes6=
 ModuleClosedNodes7=
 ModuleClosedNodes8=
 ModuleClosedNodes9=
-NavigationStack=Main,getTheOtherIndex,1004,0,txtFilter,getBitext,35,0,txtFilter,readTxt,22,0,Utils,readLanguageCode,114,0,Main,fillPane,540,6,Main,mergeSegment,700,4,TMX,Process_Globals,3,0,TMX,EscapeXml,70,0,TMX,exportQuick,5,6,Main,deleteCell,982,6
+NavigationStack=Project,getProjectFileValue,109,0,Project,Class_Globals,7,0,Project,Initialize,14,0,Main,ReAlignWithBleualign,143,6,Main,exportToDocx,188,6,Main,exportSourceToTxt,249,3,Main,exportToTxt,281,6,Main,viewnotemi_Action,866,3,Project,loadSegmentsInSentenceLevel,77,6,Project,loadItemsToSegments,117,6
 SelectedBuild=0
 VisibleModules=1,2,3,4,5,6,7,8,9,10

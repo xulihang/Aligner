@@ -199,8 +199,8 @@ Sub ReAlignWithBleualign As ResumableSub
 		targetList.Initialize
 		For Each segment As Map In segments
 			Dim source,target As String
-			source=segment.Get(0)
-			target=segment.Get(1)
+			source=segment.Get("source")
+			target=segment.Get("target")
 			If source<>"" Then
 				sourceList.Add(source)
 			End If
@@ -243,9 +243,9 @@ Sub exportToDocx
 			rows.Initialize
 			For Each segment As Map In currentProject.segments
 				Dim source,target,note As String
-				source=segment.Get(0)
-				target=segment.Get(1)
-				note=segment.Get(2)
+				source=segment.Get("source")
+				target=segment.Get("target")
+				note=segment.Get("note")
 				rows.Add(Array As String(source,target,note))
 			Next
 			Dim poiw As POIWord
@@ -306,7 +306,7 @@ Sub exportSourceToTxt
 			Dim sourceList As List
 			sourceList.Initialize
 			For Each segment As Map In currentProject.segments
-				Dim source As String=segment.Get(0)
+				Dim source As String=segment.Get("source")
 				If source<>"" Then
 					sourceList.Add(source)
 				End If
@@ -334,11 +334,11 @@ Sub exportToTxt
 			End If
 			Dim result As StringBuilder
 			result.Initialize
-			For Each segment as map In currentProject.segments
+			For Each segment As Map In currentProject.segments
 				Dim source,target,note As String
-				source=segment.Get(0)
-				target=segment.Get(1)
-				note=segment.Get(2)
+				source=segment.Get("source")
+				target=segment.Get("target")
+				note=segment.Get("note")
 				result.Append(source).Append(splitter).Append(target).Append(splitter).Append(note.Replace(CRLF,"\n")).Append(CRLF)
 			Next
 			File.WriteString(path,"",result.ToString)
@@ -923,7 +923,7 @@ Sub viewnotemi_Action
 	p=ta.Parent
 	Dim index As Int=editorLV.Items.IndexOf(p)
 	Dim segment As Map=currentProject.segments.Get(index)
-	fx.Msgbox(MainForm,segment.Get(2),"Note")
+	fx.Msgbox(MainForm,segment.Get("note"),"Note")
 End Sub
 
 
