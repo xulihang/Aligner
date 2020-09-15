@@ -998,7 +998,7 @@ End Sub
 
 Sub updateSegmentsLabel(TextArea1 As TextArea)
 	Dim index As Int=editorLV.Items.IndexOf(TextArea1.Parent)
-	SegmentsLabel.Text=index&"/"&editorLV.Items.Size
+	SegmentsLabel.Text=(index+1)&"/"&editorLV.Items.Size
 End Sub
 
 Sub upmi_Action
