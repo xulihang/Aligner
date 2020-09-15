@@ -33,6 +33,7 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String) As ResumableSub
 	ids.Initialize
 	For i=0 To segmentsForIteration.Size-1
 		'Log(i)
+		Dim initSize as Int=sourceSegments.Size
 		Dim segment As Map
 		segment.Initialize
 		segment=segmentsForIteration.Get(i)
@@ -73,7 +74,7 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String) As ResumableSub
 			Next
 		End If
 		
-		For k=0 To sourceSegments.Size-1
+		For k=1 To sourceSegments.Size-initSize
 			ids.Add(i)
 		Next
 		
@@ -84,6 +85,9 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String) As ResumableSub
 	result.Put("target",targetSegments)
 	result.Put("notes",notes)
 	result.Put("ids",ids)
+	Log("done")
+	Log(ids.Size)
+	Log(sourceSegments.Size)
 	loadItemsToSegments(result)
 	Return ""
 End Sub

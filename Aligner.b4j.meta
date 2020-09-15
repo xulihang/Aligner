@@ -58,6 +58,6 @@ ModuleClosedNodes6=
 ModuleClosedNodes7=
 ModuleClosedNodes8=
 ModuleClosedNodes9=
-NavigationStack=Project,getProjectFileValue,109,0,Project,Class_Globals,7,0,Project,Initialize,14,0,Main,ReAlignWithBleualign,143,6,Main,exportToDocx,188,6,Main,exportSourceToTxt,249,3,Main,exportToTxt,281,6,Main,viewnotemi_Action,866,3,Project,loadSegmentsInSentenceLevel,77,6,Project,loadItemsToSegments,117,6
+NavigationStack=Project,getProjectFileValue,109,0,Project,Class_Globals,7,0,Project,Initialize,14,0,Main,ReAlignWithBleualign,143,6,Main,exportToDocx,188,6,Main,exportSourceToTxt,249,3,Main,exportToTxt,281,6,Main,viewnotemi_Action,866,3,Project,loadItemsToSegments,119,6,Project,loadSegmentsInSentenceLevel,70,6
 SelectedBuild=0
 VisibleModules=1,2,3,4,5,6,7,8,9,10
