@@ -37,17 +37,17 @@ Library8=b4jdragtome
 Library9=jpoi
 Module1=Project
 Module10=TMX
-Module11=Bleualign
-Module12=assFilter
-Module13=openxmlFilter
-Module14=AssPicker
-Module15=SplitterChooser
-Module16=POIWord
-Module17=XMLUtils
-Module18=Map2Xml
-Module19=Xml2Map
+Module11=progressDialog
+Module12=Bleualign
+Module13=assFilter
+Module14=openxmlFilter
+Module15=AssPicker
+Module16=SplitterChooser
+Module17=POIWord
+Module18=XMLUtils
+Module19=Map2Xml
 Module2=BiTextFilesPicker
-Module20=progressDialog
+Module20=Xml2Map
 Module3=SrxPicker
 Module4=LanguagePairSelector
 Module5=Utils
@@ -317,14 +317,15 @@ Sub appendTranslations(segments As List,translationList As List) As Boolean
 End Sub
 
 Sub segmentsInParagraphs(segments As List) As List
+	Dim paragraphs As List
+	paragraphs.Initialize
 	If segments.Size>0 Then
 		Dim segment As Map =segments.Get(0)
 		If segment.ContainsKey("id")=False Then
-			Return segments
+			paragraphs.add(segments)
+			Return paragraphs
 		End If
 	End If
-	Dim paragraphs As List
-	paragraphs.Initialize
 	Dim previousID As Int=0
 	Dim paragraphSegments As List
 	paragraphSegments.Initialize
