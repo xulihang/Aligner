@@ -27,6 +27,7 @@ FileGroup9=Default Group
 Group=Default Group
 Library1=jcore
 Library10=jshell
+Library11=byteconverter
 Library2=jfx
 Library3=javaobject
 Library4=jxmlsax
@@ -44,10 +45,15 @@ Module14=openxmlFilter
 Module15=AssPicker
 Module16=SplitterChooser
 Module17=POIWord
-Module18=XMLUtils
-Module19=Map2Xml
+Module18=Map2Xml
+Module19=Xml2Map
 Module2=BiTextFilesPicker
-Module20=Xml2Map
+Module20=XmlNode
+Module21=XmlParser
+Module22=XMLUtils
+Module23=SimpleTag
+Module24=TagKind
+Module25=XMLBuilder2
 Module3=SrxPicker
 Module4=LanguagePairSelector
 Module5=Utils
@@ -56,8 +62,8 @@ Module7=icu4j
 Module8=segmentation
 Module9=SRX
 NumberOfFiles=12
-NumberOfLibraries=10
-NumberOfModules=20
+NumberOfLibraries=11
+NumberOfModules=25
 Version=7.8
 @EndOfDesignText@
 #Region Project Attributes 
@@ -128,26 +134,23 @@ Sub MenuBar1_Action
 			End If
 		Case "bilingual file"
 			If currentProject.IsInitialized Then
-				Dim response As Int=fx.Msgbox2(MainForm,"Use high precision mode for Chinese/English alignment?","","Yes","","No",fx.MSGBOX_CONFIRMATION)
-				Dim highPrecison As Boolean
-				If response=fx.DialogResponse.POSITIVE Then
-					highPrecison=True
-				Else
-					highPrecison=False
-				End If
 				Dim fc As FileChooser
 				fc.Initialize
-				fc.SetExtensionFilter("Bilingual Files",Array As String("*.docx","*.txt"))
+				fc.SetExtensionFilter("Bilingual Files",Array As String("*.docx","*.txt","*.tmx","*.xlf"))
 				Dim path As String=fc.ShowOpen(MainForm)
 				Dim result As Map
 				result.Initialize
 				Dim langPair As Map
 				langPair=currentProject.getProjectFileValue("langPair")
 				If File.Exists(path,"") Then
-					If path.EndsWith(".docx") Then
-						result=openxmlFilter.getBitext(path,langPair,highPrecison)
-					Else if path.EndsWith(".txt") Then
-						result=txtFilter.getBitext(path,langPair,highPrecison)
+					If path.ToLowerCase.EndsWith(".docx") Then
+						result=openxmlFilter.getBitext(path,langPair,askHighPrecision)
+					Else if path.ToLowerCase.EndsWith(".txt") Then
+						result=txtFilter.getBitext(path,langPair,askHighPrecision)
+					Else if path.ToLowerCase.EndsWith(".tmx") Then
+						result=TMX.getBitext(path,langPair)
+					Else if path.ToLowerCase.EndsWith(".xlf") Then
+
 					End If
 					currentProject.loadItemsToSegments(result)
 					loadSegmentsToListView
@@ -186,6 +189,17 @@ Sub MenuBar1_Action
 		Case "Export Source to TXT for Translation"
 			exportSourceToTxt
 	End Select
+End Sub
+
+Sub askHighPrecision As Boolean
+	Dim response As Int=fx.Msgbox2(MainForm,"Use high precision mode for Chinese/English alignment?","","Yes","","No",fx.MSGBOX_CONFIRMATION)
+	Dim highPrecison As Boolean
+	If response=fx.DialogResponse.POSITIVE Then
+		highPrecison=True
+	Else
+		highPrecison=False
+	End If
+	Return highPrecison
 End Sub
 
 Sub ReAlignWithBleualign As ResumableSub
@@ -245,7 +259,7 @@ Sub ReAlignWithBleualign As ResumableSub
 				Dim source,target,translation As String
 				source=segment.Get("source")
 				target=segment.Get("target")
-				translation=segment.Get("alt-translation")
+				translation=segment.GetDefault("alt-translation","")
 				If source<>"" Then
 					sourceList.Add(source)
 				End If
