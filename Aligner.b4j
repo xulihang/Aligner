@@ -54,6 +54,8 @@ Module22=XMLUtils
 Module23=SimpleTag
 Module24=TagKind
 Module25=XMLBuilder2
+Module26=workfileFilter
+Module27=FileChooserUtils
 Module3=SrxPicker
 Module4=LanguagePairSelector
 Module5=Utils
@@ -63,7 +65,7 @@ Module8=segmentation
 Module9=SRX
 NumberOfFiles=12
 NumberOfLibraries=11
-NumberOfModules=25
+NumberOfModules=27
 Version=7.8
 @EndOfDesignText@
 #Region Project Attributes 
@@ -136,7 +138,13 @@ Sub MenuBar1_Action
 			If currentProject.IsInitialized Then
 				Dim fc As FileChooser
 				fc.Initialize
-				fc.SetExtensionFilter("Bilingual Files",Array As String("*.docx","*.txt","*.tmx","*.xlf"))
+				'fc.SetExtensionFilter("Bilingual Files",Array As String("*.docx","*.txt","*.tmx","*.xlf","*.json"))
+				Dim descriptionList,filterList As List
+				descriptionList.Initialize
+				filterList.Initialize
+				descriptionList.AddAll(Array As String("docx file","txt file","tmx file","BasicCAT workfile"))
+				filterList.AddAll(Array As String("*.docx","*.txt","*.tmx","*.json"))
+				FileChooserUtils.AddExtensionFilters4(fc,descriptionList,filterList,True,"All",True)
 				Dim path As String=fc.ShowOpen(MainForm)
 				Dim result As Map
 				result.Initialize
@@ -149,8 +157,13 @@ Sub MenuBar1_Action
 						result=txtFilter.getBitext(path,langPair,askHighPrecision)
 					Else if path.ToLowerCase.EndsWith(".tmx") Then
 						result=TMX.getBitext(path,langPair)
+					Else if path.ToLowerCase.EndsWith(".json") Then
+						result=workfileFilter.getBitext(path)
 					Else if path.ToLowerCase.EndsWith(".xlf") Then
 
+                    Else
+						fx.Msgbox(MainForm,"Not supported","")
+						Return
 					End If
 					currentProject.loadItemsToSegments(result)
 					loadSegmentsToListView
