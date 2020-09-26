@@ -85,6 +85,6 @@ ModuleClosedNodes6=
 ModuleClosedNodes7=
 ModuleClosedNodes8=
 ModuleClosedNodes9=
-NavigationStack=TMX,getBitext,19,0,TMX,getTransUnits,29,0,TMX,importedList2,47,0,TMX,EscapeXml,169,0,XMLUtils,TagsRemoved,6,0,TMX,HandleTags,170,6,Main,exportToTMX,362,6,TMX,TagsConvertedXML,177,0,TMX,convertToTMXTags,181,0,TMX,exportQuick,152,6
+NavigationStack=xliffFilter,Process_Globals,6,0,xliffFilter,readFileIntoParagraphs,6,6,Visual Designer,BiTextFilesPicker.bjl,-100,2,BiTextFilesPicker,chooseFile,64,4,BiTextFilesPicker,sourceDrag_ReceivedFilePath,73,0,BiTextFilesPicker,ChooseSourceButton_MouseClicked,61,0,BiTextFilesPicker,ChooseTargetButton_MouseClicked,56,6,BiTextFilesPicker,targetDrag_ReceivedFilePath,80,0,BiTextFilesPicker,askIsSourceForXLIFF,87,6,BiTextFilesPicker,ReadButton_MouseClicked,41,6
 SelectedBuild=0
 VisibleModules=1,2,3,4,5,6,7,8,9,10,20,21,22,23,24,25,14,26,27,28

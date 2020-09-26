@@ -41,12 +41,16 @@ Sub ReadButton_MouseClicked (EventData As MouseEvent)
 		sourceList=txtFilter.readFileIntoParagraphs(SourcePathTextField.Text)
 	else if SourcePathTextField.Text.ToLowerCase.EndsWith(".docx") Then
 		sourceList=openxmlFilter.readFileIntoParagraphs(SourcePathTextField.Text)
+	else if SourcePathTextField.Text.ToLowerCase.EndsWith(".xlf") Then
+		sourceList=xliffFilter.readFileIntoParagraphs(SourcePathTextField.Text,SourcePathTextField.Tag)
 	End If
 	
 	If TargetPathTextField.Text.ToLowerCase.EndsWith(".txt") Then
 		targetList=txtFilter.readFileIntoParagraphs(TargetPathTextField.Text)
 	else if TargetPathTextField.Text.ToLowerCase.EndsWith(".docx") Then
 		targetList=openxmlFilter.readFileIntoParagraphs(TargetPathTextField.Text)
+	else if TargetPathTextField.Text.ToLowerCase.EndsWith(".xlf") Then
+		targetList=xliffFilter.readFileIntoParagraphs(TargetPathTextField.Text,TargetPathTextField.Tag)
 	End If
 
 	result.Put("source",sourceList)
@@ -56,24 +60,38 @@ End Sub
 
 Sub ChooseTargetButton_MouseClicked (EventData As MouseEvent)
 	TargetPathTextField.Text=chooseFile
+	askIsSourceForXLIFF(TargetPathTextField)
 End Sub
 
 Sub ChooseSourceButton_MouseClicked (EventData As MouseEvent)
 	SourcePathTextField.Text=chooseFile
+	askIsSourceForXLIFF(SourcePathTextField)
 End Sub
 
 Sub chooseFile As String
 	Dim fc As FileChooser
 	fc.Initialize
-	fc.SetExtensionFilter("Text Files",Array As String("*.txt","*.docx"))
+	fc.SetExtensionFilter("Text Files",Array As String("*.txt","*.docx","*.xlf"))
 	Return fc.ShowOpen(frm)
 End Sub
 
-
 Sub sourceDrag_ReceivedFilePath (Filepath As String)
 	SourcePathTextField.Text=Filepath
+	askIsSourceForXLIFF(SourcePathTextField)
 End Sub
 
 Sub targetDrag_ReceivedFilePath (Filepath As String)
 	TargetPathTextField.Text=Filepath
+	askIsSourceForXLIFF(TargetPathTextField)
+End Sub
+
+Sub askIsSourceForXLIFF(tf As TextField)
+	If tf.Text.ToLowerCase.EndsWith(".xlf") Then
+		Dim resp As Int=fx.Msgbox2(frm,"Read source or target?","","Source","","Target",fx.MSGBOX_CONFIRMATION)
+		If resp=fx.DialogResponse.POSITIVE Then
+			tf.Tag=True
+		Else
+			tf.Tag=False
+		End If
+	End If
 End Sub

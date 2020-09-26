@@ -10,6 +10,18 @@ Sub Process_Globals
 End Sub
 
 
+Sub readFileIntoParagraphs(path As String,isSource As Boolean) As List
+	Dim result As Map=getBitext(path)
+	Dim sourceLines,targetLines As List
+	sourceLines=result.Get("source")
+	targetLines=result.Get("target")
+	If isSource Then
+		Return sourceLines
+	Else
+		Return targetLines
+	End If
+End Sub
+
 Sub getFilesList(path As String) As List
 	Dim xmlstring As String=File.ReadString(path,"")
 	Dim root As XmlNode=XMLUtils.parse(xmlstring)
