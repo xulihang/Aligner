@@ -411,6 +411,31 @@ Sub exportToTMX
 			If path="" Then
 				Return
 			End If
+			
+			Dim includeTags As Boolean=True
+			Dim useTMXTags As Boolean=True
+			Dim response As Int
+			response=fx.Msgbox2(MainForm,"include tags?","","Yes","Cancel","No",fx.MSGBOX_CONFIRMATION)
+			Select response
+				Case fx.DialogResponse.CANCEL
+					Return
+				Case fx.DialogResponse.POSITIVE
+					includeTags=True
+				Case fx.DialogResponse.NEGATIVE
+					includeTags=False
+			End Select
+            If includeTags Then
+				Dim result2 As Int
+				result2=fx.Msgbox2(MainForm,"How to handle tags?","","Keep the original format","Cancel","Conform to TMX Specification",fx.MSGBOX_CONFIRMATION)
+				Select result2
+					Case fx.DialogResponse.CANCEL
+						Return
+					Case fx.DialogResponse.POSITIVE
+						useTMXTags=False
+					Case fx.DialogResponse.NEGATIVE
+						useTMXTags=True
+				End Select
+           End If
 
 			Dim segments As List
 			segments.Initialize
@@ -432,7 +457,7 @@ Sub exportToTMX
 			Dim langPair As Map
 			langPair=currentProject.getProjectFileValue("langPair")
 			'TMX.export(segments,langPair.Get("source"),langPair.Get("target"),path,False,False)
-			TMX.exportQuick(segments,langPair.Get("source"),langPair.Get("target"),path)
+			TMX.exportQuick(segments,langPair.Get("source"),langPair.Get("target"),path,includeTags,useTMXTags)
 			fx.Msgbox(MainForm,"Done.","")
 		End If
 	End If

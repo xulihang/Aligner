@@ -121,7 +121,7 @@ Sub removeTMXTags(s As String) As String
 End Sub
 
 
-Sub exportQuick(segments As List,sourceLang As String,targetLang As String,path As String)
+Sub exportQuick(segments As List,sourceLang As String,targetLang As String,path As String,includeTags As Boolean,useTMXTags As Boolean)
 	Dim head As String=$"<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <tmx version="1.4">
     <header>
@@ -150,8 +150,12 @@ Sub exportQuick(segments As List,sourceLang As String,targetLang As String,path 
 		
 		Dim source As String=bitext.Get("source")
 		Dim target As String=bitext.Get("target")
-		source=EscapeXml(source)
-		target=EscapeXml(target)
+		source=HandleTags(source,includeTags,useTMXTags)
+		target=HandleTags(target,includeTags,useTMXTags)
+		If useTMXTags=False Then
+			source=EscapeXml(source)
+			target=EscapeXml(target)
+		End If
 		body.Append($"            <tuv xml:lang="${sourceLang}">"$).Append(CRLF)
 		body.Append($"                <seg>${source}</seg>"$).Append(CRLF)
 		body.Append("            </tuv>").Append(CRLF)
@@ -163,6 +167,59 @@ Sub exportQuick(segments As List,sourceLang As String,targetLang As String,path 
 	Next
 
 	File.WriteString(path,"",head&body.ToString&tail)
+End Sub
+
+Sub HandleTags(text As String,includeTags As Boolean,useTMXTags As Boolean) As String
+	If includeTags Then
+		If useTMXTags Then
+			text=TagsConvertedXML(text)
+		End If
+	Else
+		text=XMLUtils.TagsRemoved(text,False)
+	End If
+	Return text
+End Sub
+
+Sub TagsConvertedXML(text As String) As String
+	text=XMLUtils.HandleXMLEntities(text,True)
+	text=Regex.Replace2("`(&lt;.*?&gt;)`",32,text,"$1")
+	Return convertToTMXTags(text)
+End Sub
+
+
+Sub convertToTMXTags(xml As String) As String
+	Dim sb As StringBuilder
+	sb.Initialize
+	Dim matcher As Matcher
+	matcher=Regex.Matcher("</*(.*?)(\d+) */*>",xml)
+	Dim previousEndIndex As Int=0
+	Do While matcher.Find
+		sb.Append(xml.SubString2(previousEndIndex,matcher.GetStart(0)))
+		previousEndIndex=matcher.GetEnd(0)
+		If matcher.Group(1).StartsWith("g") Then
+			Dim id As Int
+			id=matcher.Group(2)
+			If matcher.match.Contains("/") Then
+				sb.Append($"<ept i="${id}">"$)
+				sb.Append(XMLUtils.EscapeXml(matcher.match))
+				sb.Append("</ept>")
+			Else
+				sb.Append($"<bpt i="${id}">"$)
+				sb.Append(XMLUtils.EscapeXml(matcher.match))
+				sb.Append("</bpt>")
+			End If
+		Else If matcher.Group(1).StartsWith("x") Then
+			sb.Append("<ph>")
+			sb.Append(XMLUtils.EscapeXml(matcher.Match))
+			sb.Append("</ph>")
+		Else
+			sb.Append(matcher.Match)
+		End If
+	Loop
+	If previousEndIndex<>xml.Length-1 Then
+		sb.Append(xml.SubString2(previousEndIndex,xml.Length))
+	End If
+	Return sb.ToString
 End Sub
 
 Public Sub EscapeXml(Raw As String) As String

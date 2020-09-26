@@ -85,6 +85,6 @@ ModuleClosedNodes6=
 ModuleClosedNodes7=
 ModuleClosedNodes8=
 ModuleClosedNodes9=
-NavigationStack=workfileFilter,getBitext,7,5,xliffFilter,Process_Globals,5,0,TMX,getBitext,19,0,XMLUtils,TextToXML,282,0,SimpleTag,Class_Globals,4,0,xliffFilter,getSegmentedSourceList,53,0,Main,MenuBar1_Action,82,4,xliffFilter,getFilesList,7,2,xliffFilter,getBitext,25,6,xliffFilter,addTransUnit,119,0
+NavigationStack=TMX,getBitext,19,0,TMX,getTransUnits,29,0,TMX,importedList2,47,0,TMX,EscapeXml,169,0,XMLUtils,TagsRemoved,6,0,TMX,HandleTags,170,6,Main,exportToTMX,362,6,TMX,TagsConvertedXML,177,0,TMX,convertToTMXTags,181,0,TMX,exportQuick,152,6
 SelectedBuild=0
 VisibleModules=1,2,3,4,5,6,7,8,9,10,20,21,22,23,24,25,14,26,27,28
