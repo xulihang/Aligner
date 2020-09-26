@@ -12,9 +12,14 @@ End Sub
 
 Sub readFileIntoParagraphs(filepath As String) As List
 	Dim textContent As String = readTxt(filepath)
+	Dim segmentsList As List=Text2Paragraphs(textContent)
+	Return segmentsList
+End Sub
+
+Public Sub Text2Paragraphs(text As String) As List
 	Dim segmentsList As List
 	segmentsList.Initialize
-	For Each source As String In Regex.Split("\n",textContent)
+	For Each source As String In Regex.Split("\n",text)
 		If source.Trim="" Then
 			Continue
 		End If

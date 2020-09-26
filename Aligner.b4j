@@ -1,21 +1,27 @@
 ﻿AppType=JavaFX
 Build1=Default,b4j.example
 File1=aligner.png
-File10=segmentationRules.srx
-File11=splitterChooser.bjl
-File12=srxPicker.bjl
+File10=segment.bjl
+File11=segmentationRules.srx
+File12=splitterChooser.bjl
+File13=srxPicker.bjl
+File14=TextArea.bjl
+File15=TwoTextArea.bjl
 File2=AssPicker.bjl
 File3=BiTextFilesPicker.bjl
-File4=LangaugePairSelector.bjl
-File5=langcodes.txt
-File6=languagesWithoutSpace.txt
-File7=main.bjl
-File8=progress.bjl
-File9=segment.bjl
+File4=clipboardreader.bjl
+File5=LangaugePairSelector.bjl
+File6=langcodes.txt
+File7=languagesWithoutSpace.txt
+File8=main.bjl
+File9=progress.bjl
 FileGroup1=Default Group
 FileGroup10=Default Group
 FileGroup11=Default Group
 FileGroup12=Default Group
+FileGroup13=Default Group
+FileGroup14=Default Group
+FileGroup15=Default Group
 FileGroup2=Default Group
 FileGroup3=Default Group
 FileGroup4=Default Group
@@ -38,25 +44,26 @@ Library8=b4jdragtome
 Library9=jpoi
 Module1=Project
 Module10=TMX
-Module11=progressDialog
-Module12=Bleualign
-Module13=assFilter
-Module14=openxmlFilter
-Module15=AssPicker
-Module16=SplitterChooser
-Module17=POIWord
-Module18=Map2Xml
-Module19=Xml2Map
+Module11=XmlNode
+Module12=XmlParser
+Module13=XMLUtils
+Module14=SimpleTag
+Module15=TagKind
+Module16=XMLBuilder2
+Module17=openxmlFilter
+Module18=workfileFilter
+Module19=FileChooserUtils
 Module2=BiTextFilesPicker
-Module20=XmlNode
-Module21=XmlParser
-Module22=XMLUtils
-Module23=SimpleTag
-Module24=TagKind
-Module25=XMLBuilder2
-Module26=workfileFilter
-Module27=FileChooserUtils
-Module28=xliffFilter
+Module20=xliffFilter
+Module21=progressDialog
+Module22=Bleualign
+Module23=assFilter
+Module24=AssPicker
+Module25=SplitterChooser
+Module26=POIWord
+Module27=Map2Xml
+Module28=Xml2Map
+Module29=ClipboardReader
 Module3=SrxPicker
 Module4=LanguagePairSelector
 Module5=Utils
@@ -64,9 +71,9 @@ Module6=txtFilter
 Module7=icu4j
 Module8=segmentation
 Module9=SRX
-NumberOfFiles=12
+NumberOfFiles=15
 NumberOfLibraries=11
-NumberOfModules=28
+NumberOfModules=29
 Version=7.8
 @EndOfDesignText@
 #Region Project Attributes 
@@ -181,6 +188,17 @@ Sub MenuBar1_Action
 				currentProject.loadItemsToSegments(result)
 				loadSegmentsToListView
 			End If
+		Case "Read from _Clipboard"
+			Dim langPair As Map
+			langPair=currentProject.getProjectFileValue("langPair")
+			Dim creader As ClipboardReader
+			creader.Initialize(langPair)
+			Dim result As Map=creader.ShowAndWait
+			If result.ContainsKey("source")=False Then
+				Return
+			End If
+			currentProject.loadItemsToSegments(result)
+			loadSegmentsToListView
 		Case "Docx"
 			exportToDocx
 		Case "Txt"
