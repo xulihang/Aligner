@@ -56,6 +56,7 @@ Module24=TagKind
 Module25=XMLBuilder2
 Module26=workfileFilter
 Module27=FileChooserUtils
+Module28=xliffFilter
 Module3=SrxPicker
 Module4=LanguagePairSelector
 Module5=Utils
@@ -65,7 +66,7 @@ Module8=segmentation
 Module9=SRX
 NumberOfFiles=12
 NumberOfLibraries=11
-NumberOfModules=27
+NumberOfModules=28
 Version=7.8
 @EndOfDesignText@
 #Region Project Attributes 
@@ -160,7 +161,7 @@ Sub MenuBar1_Action
 					Else if path.ToLowerCase.EndsWith(".json") Then
 						result=workfileFilter.getBitext(path)
 					Else if path.ToLowerCase.EndsWith(".xlf") Then
-
+						result=xliffFilter.getBitext(path)
                     Else
 						fx.Msgbox(MainForm,"Not supported","")
 						Return
