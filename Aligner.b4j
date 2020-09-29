@@ -44,27 +44,28 @@ Library8=b4jdragtome
 Library9=jpoi
 Module1=Project
 Module10=TMX
-Module11=XmlNode
-Module12=XmlParser
-Module13=XMLUtils
-Module14=SimpleTag
-Module15=TagKind
-Module16=XMLBuilder2
-Module17=openxmlFilter
-Module18=workfileFilter
-Module19=FileChooserUtils
+Module11=ClipboardReader
+Module12=xliffFilter
+Module13=XmlNode
+Module14=XmlParser
+Module15=XMLUtils
+Module16=SimpleTag
+Module17=TagKind
+Module18=XMLBuilder2
+Module19=openxmlFilter
 Module2=BiTextFilesPicker
-Module20=xliffFilter
-Module21=progressDialog
-Module22=Bleualign
-Module23=assFilter
-Module24=AssPicker
-Module25=SplitterChooser
-Module26=POIWord
-Module27=Map2Xml
-Module28=Xml2Map
-Module29=ClipboardReader
+Module20=workfileFilter
+Module21=FileChooserUtils
+Module22=progressDialog
+Module23=Bleualign
+Module24=assFilter
+Module25=AssPicker
+Module26=SplitterChooser
+Module27=POIWord
+Module28=Map2Xml
+Module29=Xml2Map
 Module3=SrxPicker
+Module30=statistics
 Module4=LanguagePairSelector
 Module5=Utils
 Module6=txtFilter
@@ -73,7 +74,7 @@ Module8=segmentation
 Module9=SRX
 NumberOfFiles=15
 NumberOfLibraries=11
-NumberOfModules=29
+NumberOfModules=30
 Version=7.8
 @EndOfDesignText@
 #Region Project Attributes 
@@ -213,6 +214,12 @@ Sub MenuBar1_Action
 				wait for (currentProject.loadSegmentsInSentenceLevel(srxPath)) Complete (temp As Object)
 				loadSegmentsToListView
 			End If
+		Case "Count words"
+			Dim langPair As Map
+			langPair=currentProject.getProjectFileValue("langPair")
+			Dim s As statistics
+			s.Initialize(langPair)
+			s.MsgBox(MainForm,currentProject.segments)
 		Case "Align"
 			If currentProject.IsInitialized Then
 				wait for (ReAlignWithBleualign) Complete (temp As Object)
