@@ -192,6 +192,20 @@ Sub MenuBar1_Action
 				currentProject.loadItemsToSegments(result)
 				loadSegmentsToListView
 			End If
+		Case "Aligner project"
+			If currentProject.IsInitialized Then
+				Dim fc As FileChooser
+				fc.Initialize
+				fc.SetExtensionFilter("Aligner projects",Array As String("*.alp"))
+				Dim path As String=fc.ShowOpen(MainForm)
+				If File.Exists(path,"") Then
+					Dim project1 As Project
+					project1.Initialize(path)
+					project1.readProjectFile
+					currentProject.segments.AddAll(project1.segments)
+					loadSegmentsToListView
+				End If
+			End If
 		Case "Read from _Clipboard"
 			Dim langPair As Map
 			langPair=currentProject.getProjectFileValue("langPair")

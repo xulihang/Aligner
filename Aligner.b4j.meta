@@ -94,6 +94,6 @@ ModuleClosedNodes6=
 ModuleClosedNodes7=
 ModuleClosedNodes8=
 ModuleClosedNodes9=
-NavigationStack=Main,RemoveRange,170,6,Main,targetTextArea_FocusChanged,1110,0,Main,sourceTextArea_FocusChanged,1096,0,Main,Process_Globals,16,4,Main,updateSegmentsLabel,1117,2,Visual Designer,main.bjl,-100,5,Visual Designer,SegmentsRemover.bjl,-100,6,Main,GotoTheNextEmptySegment,163,6,SegmentsRemover,AppendButton_MouseClicked,27,0,SegmentsRemover,Show,15,0,SegmentsRemover,Initialize,11,0
+NavigationStack=Main,updateSegmentsLabel,1117,2,Visual Designer,SegmentsRemover.bjl,-100,6,Main,GotoTheNextEmptySegment,163,6,SegmentsRemover,AppendButton_MouseClicked,27,0,SegmentsRemover,Show,15,0,Visual Designer,main.bjl,-100,6,SegmentsRemover,Initialize,12,0,Main,openProject,613,0,Main,exportToTMX,528,0,Main,MenuBar1_Action,120,6
 SelectedBuild=0
 VisibleModules=1,2,3,4,5,6,7,8,9,10,31
