@@ -217,12 +217,14 @@ Sub MenuBar1_Action
 			End If
 			currentProject.loadItemsToSegments(result)
 			loadSegmentsToListView
-		Case "Docx"
+		Case "DOCX"
 			exportToDocx
-		Case "Txt"
+		Case "TXT"
 			exportToTxt
 		Case "TMX"
 			exportToTMX
+		Case "XLSX"
+			exportToXLSX
 		Case "_Segment into sentences"
 			If currentProject.IsInitialized Then
 				Dim srxfilePicker As SrxPicker
@@ -308,6 +310,25 @@ Public Sub RemoveDuplicate
 	currentProject.segments.AddAll(new)
 	loadSegmentsToListView
 	fx.Msgbox(MainForm,(sizeAfter-sizeBefore)&" segments removed","")
+End Sub
+
+Sub DuplicateRemovedSegments(segments As List) As List
+	Dim new As List
+	new.Initialize
+	Dim map1 As Map
+	map1.Initialize
+	For Each segment As Map In segments
+		Dim source,target As String
+		source=segment.Get("source")
+		target=segment.Get("target")
+		If map1.ContainsKey(source) Then
+			Continue
+		Else
+			new.Add(segment)
+			map1.Put(source,target)
+		End If
+	Next
+	Return new
 End Sub
 
 Public Sub CleanTags
@@ -558,6 +579,37 @@ Sub exportToDocx
 	End If
 End Sub
 
+Sub exportToXLSX
+	If currentProject.IsInitialized Then
+		Dim fc As FileChooser
+		fc.Initialize
+		fc.SetExtensionFilter("XLSX",Array As String("*.xlsx"))
+		Dim path As String = fc.ShowSave(MainForm)
+		If path="" Then
+			Return
+		End If
+		Dim wb As PoiWorkbook
+		wb.InitializeNew(True)
+		Dim sheet1 As PoiSheet = wb.AddSheet("Sheet1",0)
+		Dim head As PoiRow=sheet1.CreateRow(0)
+		Dim langPair As Map=currentProject.getProjectFileValue("langPair")
+		head.CreateCellString(0,langPair.Get("source"))
+		head.CreateCellString(1,langPair.Get("target"))
+		For Each segment As Map In currentProject.segments
+			Dim source,target As String
+			source=segment.Get("source")
+			target=segment.Get("target")
+			Dim rowNumber As Int
+			rowNumber=sheet1.LastRowNumber+1
+			Dim row As PoiRow=sheet1.CreateRow(rowNumber)
+			row.CreateCellString(0,source)
+			row.CreateCellString(1,target)
+		Next
+		wb.Save(path,"")
+		fx.Msgbox(MainForm,"Done","")
+	End If
+End Sub
+
 Sub exportToTMX
 	If currentProject.IsInitialized Then
 		If currentProject.segments.Size<>0 Then
@@ -596,7 +648,7 @@ Sub exportToTMX
 
 			Dim segments As List
 			segments.Initialize
-			For Each segment As Map In currentProject.segments
+			For Each segment As Map In DuplicateRemovedSegments(currentProject.segments)
 				Dim source,target,note As String
 				source=segment.Get("source")
 				target=segment.Get("target")
