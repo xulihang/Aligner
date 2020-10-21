@@ -33,7 +33,7 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String) As ResumableSub
 	ids.Initialize
 	For i=0 To segmentsForIteration.Size-1
 		'Log(i)
-		Dim initSize as Int=sourceSegments.Size
+		Dim initSize As Int=sourceSegments.Size
 		Dim segment As Map
 		segment.Initialize
 		segment=segmentsForIteration.Get(i)
@@ -107,6 +107,10 @@ Public Sub loadItemsToSegments(result As Map)
 	Else
 		ids.Initialize
 	End If
+	appendSegments(sourceSegments,targetSegments,notes,ids)
+End Sub
+
+Sub appendSegments(sourceSegments As List,targetSegments As List,notes As List,ids As List)
 	For i=0 To Max(sourceSegments.Size-1,targetSegments.size-1)
 		Dim segment As Map
 		segment.Initialize
@@ -130,6 +134,24 @@ Public Sub loadItemsToSegments(result As Map)
 		End If
 		segments.Add(segment)
 	Next
+End Sub
+
+Public Sub RemoveSegments(segmentTexts As List,isSource As Boolean)
+	Dim new As List
+	new.Initialize
+	For Each segment As Map In segments
+		Dim text As String
+		If isSource Then
+			text=segment.Get("source")
+		Else
+			text=segment.Get("target")
+		End If
+		If segmentTexts.IndexOf(text)=-1 Then
+			new.Add(segment)
+		End If
+	Next
+	segments.Clear
+	segments.AddAll(new)
 End Sub
 
 Public Sub setProjectFileValue(key As Object,value As Object)

@@ -3,10 +3,11 @@ Build1=Default,b4j.example
 File1=aligner.png
 File10=segment.bjl
 File11=segmentationRules.srx
-File12=splitterChooser.bjl
-File13=srxPicker.bjl
-File14=TextArea.bjl
-File15=TwoTextArea.bjl
+File12=SegmentsRemover.bjl
+File13=splitterChooser.bjl
+File14=srxPicker.bjl
+File15=TextArea.bjl
+File16=TwoTextArea.bjl
 File2=AssPicker.bjl
 File3=BiTextFilesPicker.bjl
 File4=clipboardreader.bjl
@@ -22,6 +23,7 @@ FileGroup12=Default Group
 FileGroup13=Default Group
 FileGroup14=Default Group
 FileGroup15=Default Group
+FileGroup16=Default Group
 FileGroup2=Default Group
 FileGroup3=Default Group
 FileGroup4=Default Group
@@ -44,37 +46,38 @@ Library8=b4jdragtome
 Library9=jpoi
 Module1=Project
 Module10=TMX
-Module11=ClipboardReader
-Module12=xliffFilter
-Module13=XmlNode
-Module14=XmlParser
-Module15=XMLUtils
-Module16=SimpleTag
-Module17=TagKind
-Module18=XMLBuilder2
-Module19=openxmlFilter
+Module11=statistics
+Module12=ClipboardReader
+Module13=xliffFilter
+Module14=XmlNode
+Module15=XmlParser
+Module16=XMLUtils
+Module17=SimpleTag
+Module18=TagKind
+Module19=XMLBuilder2
 Module2=BiTextFilesPicker
-Module20=workfileFilter
-Module21=FileChooserUtils
-Module22=progressDialog
-Module23=Bleualign
-Module24=assFilter
-Module25=AssPicker
-Module26=SplitterChooser
-Module27=POIWord
-Module28=Map2Xml
-Module29=Xml2Map
+Module20=openxmlFilter
+Module21=workfileFilter
+Module22=FileChooserUtils
+Module23=progressDialog
+Module24=Bleualign
+Module25=assFilter
+Module26=AssPicker
+Module27=SplitterChooser
+Module28=POIWord
+Module29=Map2Xml
 Module3=SrxPicker
-Module30=statistics
+Module30=Xml2Map
+Module31=SegmentsRemover
 Module4=LanguagePairSelector
 Module5=Utils
 Module6=txtFilter
 Module7=icu4j
 Module8=segmentation
 Module9=SRX
-NumberOfFiles=15
+NumberOfFiles=16
 NumberOfLibraries=11
-NumberOfModules=30
+NumberOfModules=31
 Version=7.8
 @EndOfDesignText@
 #Region Project Attributes 
@@ -93,7 +96,7 @@ Sub Process_Globals
 	Private StatusLabel As Label
 	Private cursorReachEnd As Boolean=False
 	Private SegmentsLabel As Label
-
+    Private currentIndex As Int
 End Sub
 
 Sub AppStart (Form1 As Form, Args() As String)
@@ -214,12 +217,22 @@ Sub MenuBar1_Action
 				wait for (currentProject.loadSegmentsInSentenceLevel(srxPath)) Complete (temp As Object)
 				loadSegmentsToListView
 			End If
+		Case "Remove specific segments"
+			If currentProject.IsInitialized Then
+				Dim sr As SegmentsRemover
+				sr.Initialize
+				sr.Show
+			End If
+		Case "Go to the next empty segment"
+			GotoTheNextEmptySegment
 		Case "Count words"
 			Dim langPair As Map
 			langPair=currentProject.getProjectFileValue("langPair")
 			Dim s As statistics
 			s.Initialize(langPair)
 			s.MsgBox(MainForm,currentProject.segments)
+		Case "Clean tags"
+			CleanTags
 		Case "Align"
 			If currentProject.IsInitialized Then
 				wait for (ReAlignWithBleualign) Complete (temp As Object)
@@ -228,6 +241,111 @@ Sub MenuBar1_Action
 		Case "Export Source to TXT for Translation"
 			exportSourceToTxt
 	End Select
+End Sub
+
+Sub GotoTheNextEmptySegment
+	For index=currentIndex To currentProject.segments.Size-1
+		Dim segment As Map = currentProject.segments.Get(index)
+		Dim source,target As String
+		source=segment.Get("source")
+		target=segment.Get("target")
+		If source="" Or target="" Then
+			editorLV.ScrollTo(index)
+			Return
+		End If
+	Next
+End Sub
+
+Public Sub RemoveRange(startIndex As Int,EndIndex As Int)
+	Dim new As List
+	new.Initialize
+	For index=0 To currentProject.segments.Size-1
+		If index<startIndex Or index>EndIndex Then
+			new.Add(currentProject.segments.Get(index))
+		End If
+	Next
+	currentProject.segments.Clear
+	currentProject.segments.AddAll(new)
+	loadSegmentsToListView
+End Sub
+
+Public Sub RemoveDuplicate
+	Dim new As List
+	new.Initialize
+	Dim map1 As Map
+	map1.Initialize
+	Dim sizeBefore,sizeAfter As Int
+	sizeBefore=currentProject.segments.Size
+	For Each segment As Map In currentProject.segments
+		Dim source As String = segment.Get("source")
+		If source="" Then
+			new.Add(segment)
+			Continue
+		End If
+		If map1.ContainsKey(source)=False Then
+			map1.Put(source,segment)
+			new.Add(segment)
+		Else
+			Continue
+		End If
+	Next
+	sizeAfter=new.Size
+	currentProject.segments.Clear
+	currentProject.segments.AddAll(new)
+	loadSegmentsToListView
+	fx.Msgbox(MainForm,(sizeAfter-sizeBefore)&" segments removed","")
+End Sub
+
+Public Sub CleanTags
+	For Each segment As Map In currentProject.segments
+		Dim source,target As String
+		source=segment.Get("source")
+		target=segment.Get("target")
+		segment.Put("source",Regex.Replace("<.*?>",source,""))
+		segment.Put("target",Regex.Replace("<.*?>",target,""))
+	Next
+	loadSegmentsToListView
+End Sub
+
+Public Sub RemoveSegments(segmentsText As List,isSource As Boolean)
+	Dim sourceList,targetList As List
+	sourceList.Initialize
+	targetList.Initialize
+	For Each segment As Map In currentProject.segments
+		Dim source,target As String
+		source=segment.Get("source")
+		target=segment.Get("target")
+		If segmentsText.IndexOf(source)=-1 Then
+			sourceList.Add(source)
+		End If
+		If target<>"" Then
+			targetList.Add(target)
+		End If
+	Next
+	Dim result As Map
+	result.Initialize
+	result.Put("source",sourceList)
+	result.Put("target",targetList)
+	currentProject.loadItemsToSegments(result)
+	loadSegmentsToListView
+End Sub
+
+Public Sub RemoveEmptySegments
+	Dim new As List
+	new.Initialize
+	For Each segment As Map In currentProject.segments
+		Dim source,target As String
+		source=segment.Get("source")
+		target=segment.Get("target")
+        If source.Trim="" Or target.Trim="" Then
+		    Continue
+		Else
+			new.Add(segment)
+        End If
+	Next
+    currentProject.segments.Clear
+    currentProject.segments.AddAll(new)
+	loadSegmentsToListView
 End Sub
 
 Sub askHighPrecision As Boolean
@@ -1085,6 +1203,7 @@ End Sub
 
 Sub updateSegmentsLabel(TextArea1 As TextArea)
 	Dim index As Int=editorLV.Items.IndexOf(TextArea1.Parent)
+	currentIndex=index
 	SegmentsLabel.Text=(index+1)&"/"&editorLV.Items.Size
 End Sub
 
@@ -1122,7 +1241,7 @@ Sub viewnotemi_Action
 	p=ta.Parent
 	Dim index As Int=editorLV.Items.IndexOf(p)
 	Dim segment As Map=currentProject.segments.Get(index)
-	fx.Msgbox(MainForm,segment.Get("note"),"Note")
+	fx.Msgbox(MainForm,"Note:"&segment.Get("note")&CRLF&"ID:"&segment.GetDefault("id",Null),"Note&ID")
 End Sub
 
 
@@ -1266,3 +1385,4 @@ Sub getTheOtherIndex(textIndex As Int) As Int
 	End If
 	Return theOtherIndex
 End Sub
+
