@@ -46,29 +46,29 @@ Library8=b4jdragtome
 Library9=jpoi
 Module1=Project
 Module10=TMX
-Module11=statistics
-Module12=ClipboardReader
-Module13=xliffFilter
-Module14=XmlNode
-Module15=XmlParser
-Module16=XMLUtils
-Module17=SimpleTag
-Module18=TagKind
-Module19=XMLBuilder2
+Module11=xliffFilter
+Module12=SegmentsRemover
+Module13=statistics
+Module14=ClipboardReader
+Module15=XmlNode
+Module16=XmlParser
+Module17=XMLUtils
+Module18=SimpleTag
+Module19=TagKind
 Module2=BiTextFilesPicker
-Module20=openxmlFilter
-Module21=workfileFilter
-Module22=FileChooserUtils
-Module23=progressDialog
-Module24=Bleualign
-Module25=assFilter
-Module26=AssPicker
-Module27=SplitterChooser
-Module28=POIWord
-Module29=Map2Xml
+Module20=XMLBuilder2
+Module21=openxmlFilter
+Module22=workfileFilter
+Module23=FileChooserUtils
+Module24=progressDialog
+Module25=Bleualign
+Module26=assFilter
+Module27=AssPicker
+Module28=SplitterChooser
+Module29=POIWord
 Module3=SrxPicker
-Module30=Xml2Map
-Module31=SegmentsRemover
+Module30=Map2Xml
+Module31=Xml2Map
 Module4=LanguagePairSelector
 Module5=Utils
 Module6=txtFilter
@@ -225,6 +225,8 @@ Sub MenuBar1_Action
 			exportToTMX
 		Case "XLSX"
 			exportToXLSX
+		Case "XLIFF"
+			exportToXLIFF
 		Case "_Segment into sentences"
 			If currentProject.IsInitialized Then
 				Dim srxfilePicker As SrxPicker
@@ -266,7 +268,11 @@ Sub GotoTheNextEmptySegment
 		source=segment.Get("source")
 		target=segment.Get("target")
 		If source="" Or target="" Then
-			editorLV.ScrollTo(index)
+			editorLV.ScrollTo(Max(0,index-2))
+			If Abs(currentIndex-index)>20 Then
+				Sleep(500)
+				editorLV.ScrollTo(Max(0,index-2))
+			End If
 			Return
 		End If
 	Next
@@ -576,6 +582,21 @@ Sub exportToDocx
 			poiw.createTable(rows,path)
 			fx.Msgbox(MainForm,"Done.","")
 		End If
+	End If
+End Sub
+
+Sub exportToXLIFF
+	If currentProject.IsInitialized Then
+		Dim fc As FileChooser
+		fc.Initialize
+		fc.SetExtensionFilter("XLIFF",Array As String("*.xlf"))
+		Dim path As String = fc.ShowSave(MainForm)
+		If path="" Then
+			Return
+		End If
+		Dim langPair As Map=currentProject.getProjectFileValue("langPair")
+		xliffFilter.Export(currentProject.segments,path,langPair.Get("source"),langPair.Get("target"))
+		fx.Msgbox(MainForm,"Done","")
 	End If
 End Sub
 
@@ -1054,7 +1075,7 @@ Sub ListViewParent_Resize
 	End If
 	Dim itemWidth As Double = lv.Width
 	Dim ExtraSize As Int
-	ExtraSize=3
+	ExtraSize=5
 	For i = Max(0, FirstVisibleIndex - ExtraSize) To Min(LastVisibleIndex + ExtraSize,editorLV.Items.Size - 1)
 		Try
 			Dim p As Pane
@@ -1452,3 +1473,15 @@ Sub getTheOtherIndex(textIndex As Int) As Int
 	Return theOtherIndex
 End Sub
 
+
+
+Sub editorLV_Action
+    Dim mi As MenuItem=Sender
+	Log(mi.Text)
+	Select mi.Text
+		Case "Merge"
+			
+		Case "Split"
+			
+	End Select
+End Sub

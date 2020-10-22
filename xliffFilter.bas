@@ -150,3 +150,41 @@ Sub addTransUnit(transUnit As XmlNode,tidyTransUnits As List,groupIndex As Int)
 	oneTransUnit.Put("targetMrkList",targetMrkList)
 	tidyTransUnits.Add(oneTransUnit)
 End Sub
+
+
+Sub Export(segments As List,path As String,sourceLang As String,targetLang As String)
+	Dim rootmap As Map
+	rootmap.Initialize
+	Dim xliffMap As Map
+	xliffMap.Initialize
+	xliffMap.Put("Attributes",CreateMap("version":"1.2","xmlns":"urn:oasis:names:tc:xliff:document:1.2"))
+	Dim filesList As List
+	filesList.Initialize
+	Dim filename As String="aligner.alp"
+	Dim fileMap As Map
+	fileMap.Initialize
+	fileMap.Put("Attributes",CreateMap("original":filename,"source-language":sourceLang,"target-language":targetLang,"datatype":"plaintext"))
+	Dim body As Map
+	body.Initialize
+	Dim tus As List
+	tus.Initialize
+	Dim index As Int=0
+	For Each segment As Map In segments
+		Dim tu As Map
+		tu.Initialize
+		tu.Put("Attributes",CreateMap("id":index))
+		tu.Put("source",segment.Get("source"))
+		tu.Put("target",segment.Get("target"))
+		index=index+1
+		tus.Add(tu)
+	Next
+	body.Put("trans-unit",tus)
+	fileMap.Put("body",body)
+	filesList.Add(fileMap)
+	xliffMap.Put("file",filesList)
+	rootmap.Put("xliff",xliffMap)
+	Dim m2x As Map2Xml
+	m2x.Initialize
+	File.WriteString(path,"",m2x.MapToXml(rootmap))
+End Sub
+
