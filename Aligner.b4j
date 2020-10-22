@@ -1521,21 +1521,12 @@ Sub MergeSegments(SelectedIndices As List,isSource As Boolean)
 		text=text&whiteSpace&segment.Get(key)
 	Next
 	Dim firstSegment As Map=currentProject.segments.Get(SelectedIndices.Get(0))
-	firstSegment.Put(key,text)
+	firstSegment.Put(key,text.Trim)
 
-	For i=SelectedIndices.Get(0)+1 To currentProject.segments.Size-size
-		Dim nextIndex As Int=i+size-1
+	'set the next segments empty
+	For i=1 To SelectedIndices.Size-1
 		Dim bitext As Map
-		bitext=currentProject.segments.Get(i)
-		Dim nextbitext As Map
-		nextbitext=currentProject.segments.Get(nextIndex)
-		bitext.Put(key,nextbitext.Get(key))
-	Next
-	
-	'set the last segments empty
-	For i=0 To size-2
-		Dim bitext As Map
-		bitext=currentProject.segments.Get(currentProject.segments.size-1-i)
+		bitext=currentProject.segments.Get(SelectedIndices.Get(i))
 		bitext.put(key,"")
 	Next
 	loadSegmentsToListView
