@@ -94,6 +94,6 @@ ModuleClosedNodes6=
 ModuleClosedNodes7=
 ModuleClosedNodes8=
 ModuleClosedNodes9=
-NavigationStack=Main,getTheOtherIndex,1380,0,Main,checkVisibleRange,939,0,Main,ListViewParent_Resize,996,0,Main,GotoTheNextEmptySegment,184,5,Main,targetTextArea_KeyPressed_Event,830,0,Main,mergeSegment,1069,0,Main,deleteCell,1356,0,Main,editorLV_Action,1402,6,Visual Designer,main.bjl,-100,6,Main,MergeSegments,1441,6
+NavigationStack=Main,RemoveRange,211,0,Main,RemoveDuplicate,238,0,Main,CleanTags,265,0,Main,RemoveSegments,295,0,Main,RemoveEmptySegments,313,0,Visual Designer,main.bjl,-100,4,Main,getPreviousSegs,1472,0,Main,MenuBar1_Action,147,6,Main,editorLV_Action,1412,0,Main,UndoRedo,1474,0
 SelectedBuild=0
 VisibleModules=1,2,3,4,5,6,7,8,9,10

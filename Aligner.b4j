@@ -97,6 +97,7 @@ Sub Process_Globals
 	Private cursorReachEnd As Boolean=False
 	Private SegmentsLabel As Label
     Private currentIndex As Int
+	Private previousSegments as List
 End Sub
 
 Sub AppStart (Form1 As Form, Args() As String)
@@ -144,7 +145,7 @@ Sub MenuBar1_Action
 					Return
 				End If
 				currentProject.loadItemsToSegments(result)
-				loadSegmentsToListView
+				loadSegmentsToListView(Null)
 			End If
 		Case "bilingual file"
 			If currentProject.IsInitialized Then
@@ -178,7 +179,7 @@ Sub MenuBar1_Action
 						Return
 					End If
 					currentProject.loadItemsToSegments(result)
-					loadSegmentsToListView
+					loadSegmentsToListView(Null)
 				End If
 			End If
 		Case "bilingual ass file"
@@ -190,7 +191,7 @@ Sub MenuBar1_Action
 					Return
 				End If
 				currentProject.loadItemsToSegments(result)
-				loadSegmentsToListView
+				loadSegmentsToListView(Null)
 			End If
 		Case "Aligner project"
 			If currentProject.IsInitialized Then
@@ -203,7 +204,7 @@ Sub MenuBar1_Action
 					project1.Initialize(path)
 					project1.readProjectFile
 					currentProject.segments.AddAll(project1.segments)
-					loadSegmentsToListView
+					loadSegmentsToListView(Null)
 				End If
 			End If
 		Case "Read from _Clipboard"
@@ -216,7 +217,7 @@ Sub MenuBar1_Action
 				Return
 			End If
 			currentProject.loadItemsToSegments(result)
-			loadSegmentsToListView
+			loadSegmentsToListView(Null)
 		Case "DOCX"
 			exportToDocx
 		Case "TXT"
@@ -229,11 +230,12 @@ Sub MenuBar1_Action
 			exportToXLIFF
 		Case "_Segment into sentences"
 			If currentProject.IsInitialized Then
+				Dim previousSegs As List=getPreviousSegs
 				Dim srxfilePicker As SrxPicker
 				srxfilePicker.Initialize
 				Dim srxPath As String=srxfilePicker.ShowAndWait
 				wait for (currentProject.loadSegmentsInSentenceLevel(srxPath)) Complete (temp As Object)
-				loadSegmentsToListView
+				loadSegmentsToListView(previousSegs)
 			End If
 		Case "Remove specific segments"
 			If currentProject.IsInitialized Then
@@ -253,8 +255,9 @@ Sub MenuBar1_Action
 			CleanTags
 		Case "Align"
 			If currentProject.IsInitialized Then
+				Dim previousSegs As List=getPreviousSegs
 				wait for (ReAlignWithBleualign) Complete (temp As Object)
-				loadSegmentsToListView
+				loadSegmentsToListView(previousSegs)
 			End If
 		Case "Export Source to TXT for Translation"
 			exportSourceToTxt
@@ -286,9 +289,10 @@ Public Sub RemoveRange(startIndex As Int,EndIndex As Int)
 			new.Add(currentProject.segments.Get(index))
 		End If
 	Next
+	Dim previousSegs As List=getPreviousSegs
 	currentProject.segments.Clear
 	currentProject.segments.AddAll(new)
-	loadSegmentsToListView
+	loadSegmentsToListView(previousSegs)
 End Sub
 
 Public Sub RemoveDuplicate
@@ -312,9 +316,10 @@ Public Sub RemoveDuplicate
 		End If
 	Next
 	sizeAfter=new.Size
+	Dim previousSegs As List=getPreviousSegs
 	currentProject.segments.Clear
 	currentProject.segments.AddAll(new)
-	loadSegmentsToListView
+	loadSegmentsToListView(previousSegs)
 	fx.Msgbox(MainForm,(sizeAfter-sizeBefore)&" segments removed","")
 End Sub
 
@@ -338,6 +343,7 @@ Sub DuplicateRemovedSegments(segments As List) As List
 End Sub
 
 Public Sub CleanTags
+	Dim previousSegs As List=getPreviousSegs
 	For Each segment As Map In currentProject.segments
 		Dim source,target As String
 		source=segment.Get("source")
@@ -345,7 +351,7 @@ Public Sub CleanTags
 		segment.Put("source",Regex.Replace("<.*?>",source,""))
 		segment.Put("target",Regex.Replace("<.*?>",target,""))
 	Next
-	loadSegmentsToListView
+	loadSegmentsToListView(previousSegs)
 End Sub
 
 Public Sub RemoveSegments(segmentsText As List,isSource As Boolean)
@@ -367,8 +373,9 @@ Public Sub RemoveSegments(segmentsText As List,isSource As Boolean)
 	result.Initialize
 	result.Put("source",sourceList)
 	result.Put("target",targetList)
+	Dim previousSegs As List=getPreviousSegs
 	currentProject.loadItemsToSegments(result)
-	loadSegmentsToListView
+	loadSegmentsToListView(previousSegs)
 End Sub
 
 Public Sub RemoveEmptySegments
@@ -384,9 +391,10 @@ Public Sub RemoveEmptySegments
 			new.Add(segment)
         End If
 	Next
+	Dim previousSegs As List=getPreviousSegs
     currentProject.segments.Clear
     currentProject.segments.AddAll(new)
-	loadSegmentsToListView
+	loadSegmentsToListView(previousSegs)
 End Sub
 
 Sub askHighPrecision As Boolean
@@ -775,12 +783,15 @@ Sub openProject
 	If path<>"" Then
         currentProject.Initialize(path)
 		currentProject.readProjectFile
-		loadSegmentsToListView
+		loadSegmentsToListView(Null)
 	End If
 End Sub
 
-Sub loadSegmentsToListView
+Sub loadSegmentsToListView(previousSegsList As List)
 	If currentProject.segments<>Null And currentProject.segments.Size<>0 Then
+		If previousSegsList<>Null Then
+			previousSegments=previousSegsList
+		End If
 		editorLV.Items.Clear
 		For i=0 To currentProject.segments.Size-1
 			editorLV.Items.Add("")
@@ -1483,6 +1494,8 @@ Sub editorLV_Action
 			MergeSegments(editorLV.GetSelectedIndices,True)
 		Case "Merge Target"
 			MergeSegments(editorLV.GetSelectedIndices,False)
+		Case "Undo/Redo"
+			UndoRedo
 	End Select
 End Sub
 
@@ -1491,6 +1504,7 @@ Sub MergeSegments(SelectedIndices As List,isSource As Boolean)
 	If size<=1 Then
 		Return
 	End If
+	Dim previousSegs As List=getPreviousSegs
 	Dim previousIndex As Int=SelectedIndices.Get(0)
 	For i=1 To SelectedIndices.Size-1
 		If SelectedIndices.Get(i)-previousIndex<>1 Then
@@ -1529,5 +1543,23 @@ Sub MergeSegments(SelectedIndices As List,isSource As Boolean)
 		bitext=currentProject.segments.Get(SelectedIndices.Get(i))
 		bitext.put(key,"")
 	Next
-	loadSegmentsToListView
+	loadSegmentsToListView(previousSegs)
 End Sub
+
+Sub getPreviousSegs As List
+	Dim json As JSONGenerator
+	json.Initialize2(currentProject.segments)
+	Dim jsonP As JSONParser
+	jsonP.Initialize(json.ToString)
+	Return jsonP.NextArray
+End Sub
+
+Sub UndoRedo
+	If previousSegments.IsInitialized Then
+		Dim previousSegs As List=getPreviousSegs
+		currentProject.segments.clear
+		currentProject.segments.AddAll(previousSegments)
+		loadSegmentsToListView(previousSegs)
+	End If
+End Sub
+
