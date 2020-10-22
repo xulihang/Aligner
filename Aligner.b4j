@@ -1483,11 +1483,6 @@ Sub editorLV_Action
 			MergeSegments(editorLV.GetSelectedIndices,True)
 		Case "Merge Target"
 			MergeSegments(editorLV.GetSelectedIndices,False)
-		Case "Split Source"
-			
-		Case "Split Target"
-		
-			
 	End Select
 End Sub
 
