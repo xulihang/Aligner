@@ -1479,9 +1479,69 @@ Sub editorLV_Action
     Dim mi As MenuItem=Sender
 	Log(mi.Text)
 	Select mi.Text
-		Case "Merge"
+		Case "Merge Source"
+			MergeSegments(editorLV.GetSelectedIndices,True)
+		Case "Merge Target"
+			MergeSegments(editorLV.GetSelectedIndices,False)
+		Case "Split Source"
 			
-		Case "Split"
+		Case "Split Target"
+		
 			
 	End Select
+End Sub
+
+Sub MergeSegments(SelectedIndices As List,isSource As Boolean)
+	Dim size As Int=SelectedIndices.Size
+	If size<=1 Then
+		Return
+	End If
+	Dim previousIndex As Int=SelectedIndices.Get(0)
+	For i=1 To SelectedIndices.Size-1
+		If SelectedIndices.Get(i)-previousIndex<>1 Then
+			Return
+		End If
+		previousIndex=SelectedIndices.Get(i)
+	Next
+	
+	Dim key As String
+	Dim lang As String
+	Dim langPair As Map=currentProject.getProjectFileValue("langPair")
+	If isSource Then
+		key="source"
+		lang=langPair.Get("source")
+	Else
+		key="target"
+		lang=langPair.Get("target")
+	End If
+	Dim whiteSpace As String
+	If Utils.LanguageHasSpace(lang) Then
+		whiteSpace=" "
+	Else
+		whiteSpace=""
+	End If
+	Dim text As String
+	For Each index As Int In SelectedIndices
+		Dim segment As Map=currentProject.segments.Get(index)
+		text=text&whiteSpace&segment.Get(key)
+	Next
+	Dim firstSegment As Map=currentProject.segments.Get(SelectedIndices.Get(0))
+	firstSegment.Put(key,text)
+
+	For i=SelectedIndices.Get(0)+1 To currentProject.segments.Size-size
+		Dim nextIndex As Int=i+size-1
+		Dim bitext As Map
+		bitext=currentProject.segments.Get(i)
+		Dim nextbitext As Map
+		nextbitext=currentProject.segments.Get(nextIndex)
+		bitext.Put(key,nextbitext.Get(key))
+	Next
+	
+	'set the last segments empty
+	For i=0 To size-2
+		Dim bitext As Map
+		bitext=currentProject.segments.Get(currentProject.segments.size-1-i)
+		bitext.put(key,"")
+	Next
+	loadSegmentsToListView
 End Sub
