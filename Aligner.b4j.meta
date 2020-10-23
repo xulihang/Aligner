@@ -97,6 +97,6 @@ ModuleClosedNodes6=
 ModuleClosedNodes7=
 ModuleClosedNodes8=
 ModuleClosedNodes9=
-NavigationStack=SegmentsViewer,SegmentInSilence,89,6,Main,deleteCell,1371,0,Main,editorLV_Action,1482,0,Main,Revert,1492,6,statistics,Class_Globals,0,0,statistics,MsgBox,11,0,Main,MenuBar1_Action,176,0,statistics,TargetSourceRatio,46,5,statistics,TargetSourceRatio2,51,6,Main,ReAlignWithBleualign,425,6,Main,fillPane,988,4
+NavigationStack=Main,editorLV_Action,1482,0,Main,Revert,1492,6,statistics,Class_Globals,0,0,statistics,MsgBox,11,0,Main,MenuBar1_Action,176,0,statistics,TargetSourceRatio,46,5,statistics,TargetSourceRatio2,51,6,Main,ReAlignWithBleualign,425,6,Main,fillPane,990,4,Main,deleteCell,1451,6
 SelectedBuild=0
 VisibleModules=1,2,3,4,5,6,7,8,9,10,11,13,14

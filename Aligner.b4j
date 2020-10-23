@@ -1483,26 +1483,38 @@ Sub deleteCell(isSource As Boolean,ta As TextArea)
 	
 	Dim index As Int
 	index=editorLV.Items.IndexOf(p)
-
+	Dim segment As Map=currentProject.segments.Get(index)
+	Dim paraMode As Boolean=False
+	Dim paraID As Int
+	If segment.ContainsKey("id") Then
+		paraMode=True
+		paraID=segment.Get("id")
+	End If
 	Dim size As Int
 	size=editorLV.Items.Size
-
+	Dim lastIndex As Int=size-1
 	For i=index To size-2
 		Dim nextIndex As Int=i+1
 		Dim bitext As Map
 		bitext=currentProject.segments.Get(i)
-        Dim nextbitext As Map
+		Dim nextbitext As Map
 		nextbitext=currentProject.segments.Get(nextIndex)
-		bitext.Put(key,nextbitext.Get(key))
+		If paraMode Then
+			If nextbitext.GetDefault("id",-1)<>paraID Then
+				lastIndex=i
+				Exit
+			End If
+		End If
 		
-		If editorLV.Items.Get(i)<>"" Then 
+		bitext.Put(key,nextbitext.Get(key))
+		If editorLV.Items.Get(i)<>"" Then
 			Dim p As Pane
 			Dim ta As TextArea
 			p=editorLV.Items.Get(i)
 			ta=p.GetNode(taIndex)
 			ta.Text=bitext.Get(key)
 		End If
-        If editorLV.Items.Get(nextIndex)<>"" Then
+		If editorLV.Items.Get(nextIndex)<>"" Then
 			Dim nextPane As Pane
 			nextPane=editorLV.Items.Get(nextIndex)
 			Dim nextTa As TextArea
@@ -1512,17 +1524,20 @@ Sub deleteCell(isSource As Boolean,ta As TextArea)
 	Next
 	
 	'set the last segment empty
+
+
 	Dim bitext As Map
-	bitext=currentProject.segments.Get(size-1)
+	bitext=currentProject.segments.Get(lastIndex)
 	bitext.put(key,"")
-	If editorLV.Items.Get(size-1)<>"" Then
+	If editorLV.Items.Get(lastIndex)<>"" Then
 		Dim p As Pane
-		p=editorLV.Items.Get(size-1)
+		p=editorLV.Items.Get(lastIndex)
 		Dim ta As TextArea
 		ta=p.GetNode(taIndex)
 		ta.Text=""
 	End If
 	
+	'remove empty segments
 	Dim toRemoveIndexList As List
 	toRemoveIndexList.Initialize
 	Dim index As Int=0
@@ -1533,10 +1548,10 @@ Sub deleteCell(isSource As Boolean,ta As TextArea)
 		index=index+1
 	Next
 	toRemoveIndexList.Sort(False)
-    For Each index As Int In toRemoveIndexList
+	For Each index As Int In toRemoveIndexList
 		currentProject.segments.RemoveAt(index)
 		editorLV.Items.RemoveAt(index)
-    Next
+	Next
 End Sub
 
 
@@ -1557,7 +1572,7 @@ Sub editorLV_Action
 	Log(mi.Text)
 	Select mi.Text
 		Case "Revert"
-			revert
+			Revert
 		Case "Merge Source"
 			MergeSegments(editorLV.GetSelectedIndices,True)
 		Case "Merge Target"
