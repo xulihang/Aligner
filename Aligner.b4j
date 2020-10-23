@@ -247,8 +247,10 @@ Sub MenuBar1_Action
 				sr.Initialize
 				sr.Show
 			End If
-		Case "Go to the next empty segment"
+		Case "Go to the next _empty segment"
 			GotoTheNextEmptySegment
+		Case "Go to the next segment with _issues"
+			GotoTheNextSegmentWithIssues
 		Case "Count words"
 			Dim langPair As Map
 			langPair=currentProject.getProjectFileValue("langPair")
@@ -282,6 +284,20 @@ Sub GotoTheNextEmptySegment
 			End If
 			Return
 		End If
+	Next
+End Sub
+
+Sub GotoTheNextSegmentWithIssues
+	For index=currentIndex To currentProject.segments.Size-1
+		Dim segment As Map = currentProject.segments.Get(index)
+		If segment.GetDefault("complete",True)=False Or segment.GetDefault("accurate",True)=False Then
+			editorLV.ScrollTo(Max(0,index-2))
+			If Abs(currentIndex-index)>20 Then
+				Sleep(500)
+				editorLV.ScrollTo(Max(0,index-2))
+			End If
+			Return
+        End If
 	Next
 End Sub
 
