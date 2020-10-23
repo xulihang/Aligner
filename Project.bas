@@ -8,6 +8,7 @@ Sub Class_Globals
 	Private fx As JFX
 	Private ProjectFile As Map
 	Public segments As List
+	Public paragraphs As Map
 	Private path As String
 End Sub
 
@@ -15,6 +16,7 @@ End Sub
 Public Sub Initialize(projectPath As String)
 	ProjectFile.Initialize
 	segments.Initialize
+	paragraphs.Initialize
 	path=projectPath
 End Sub
 
@@ -35,12 +37,15 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String) As ResumableSub
 		'Log(i)
 		Dim initSize As Int=sourceSegments.Size
 		Dim segment As Map
-		segment.Initialize
 		segment=segmentsForIteration.Get(i)
 		Dim source,target As String
 		source=segment.Get("source")
 		target=segment.Get("target")
-		
+		Dim para As Map
+		para.Initialize
+		para.Put("source",source)
+		para.Put("target",target)
+		paragraphs.Put(i,para)
 		Dim langPair As Map=ProjectFile.Get("langPair")
 		Dim index As Int=0
 		wait for (segmentation.segmentedTxt(source,True,langPair.Get("source"),srxPath,True)) Complete (segmented As List)
@@ -175,10 +180,14 @@ Public Sub readProjectFile
 	If ProjectFile.ContainsKey("segments") Then
 		segments=ProjectFile.Get("segments")
 	End If
+	If ProjectFile.ContainsKey("paragraphs") Then
+		paragraphs=ProjectFile.Get("paragraphs")
+	End If
 End Sub
 
 Public Sub save
 	ProjectFile.Put("segments",segments)
+	ProjectFile.Put("paragraphs",paragraphs)
 	Dim json As JSONGenerator
 	json.Initialize(ProjectFile)
 	File.WriteString(path,"",json.ToPrettyString(4))

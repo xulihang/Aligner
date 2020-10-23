@@ -97,7 +97,7 @@ Sub Process_Globals
 	Private cursorReachEnd As Boolean=False
 	Private SegmentsLabel As Label
     Private currentIndex As Int
-	Private previousSegments as List
+	Private previousSegments As List
 End Sub
 
 Sub AppStart (Form1 As Form, Args() As String)
@@ -1494,6 +1494,8 @@ Sub editorLV_Action
 			MergeSegments(editorLV.GetSelectedIndices,True)
 		Case "Merge Target"
 			MergeSegments(editorLV.GetSelectedIndices,False)
+		Case "View Paragraph"
+			ViewParagraph
 		Case "Undo/Redo"
 			UndoRedo
 	End Select
@@ -1562,4 +1564,16 @@ Sub UndoRedo
 		loadSegmentsToListView(previousSegs)
 	End If
 End Sub
+
+Sub ViewParagraph
+	Dim segment As Map=currentProject.segments.Get(currentIndex)
+	If segment.ContainsKey("id") Then
+		Dim id As Int=segment.Get("id")
+		fx.Msgbox(MainForm,currentProject.paragraphs.Get(id),"")
+	Else
+		fx.Msgbox(MainForm,segment,"")
+	End If
+End Sub
+
+
 

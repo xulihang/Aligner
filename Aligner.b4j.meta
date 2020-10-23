@@ -94,6 +94,6 @@ ModuleClosedNodes6=
 ModuleClosedNodes7=
 ModuleClosedNodes8=
 ModuleClosedNodes9=
-NavigationStack=Main,RemoveRange,211,0,Main,RemoveDuplicate,238,0,Main,CleanTags,265,0,Main,RemoveSegments,295,0,Main,RemoveEmptySegments,313,0,Visual Designer,main.bjl,-100,4,Main,getPreviousSegs,1472,0,Main,MenuBar1_Action,147,6,Main,editorLV_Action,1412,0,Main,UndoRedo,1474,0
+NavigationStack=Project,saveProjectFile,160,0,Project,save,180,1,Project,readProjectFile,174,0,Project,Class_Globals,4,2,Project,loadSegmentsInSentenceLevel,41,6,Visual Designer,main.bjl,-100,3,Main,newProject,683,0,Main,UndoRedo,1485,0,Main,editorLV_Action,1415,4,Main,ViewParagraph,1492,6
 SelectedBuild=0
 VisibleModules=1,2,3,4,5,6,7,8,9,10
