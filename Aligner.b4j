@@ -418,6 +418,13 @@ Sub ReAlignWithBleualign As ResumableSub
 	If response=fx.DialogResponse.CANCEL Then
 		Return ""
 	End If
+	
+	Dim langPair As Map
+	langPair=currentProject.getProjectFileValue("langPair")
+	Dim s As statistics
+	s.Initialize(langPair)
+	Dim targetSourceRatio As Double=s.TargetSourceRatio(currentProject.segments)
+	
 	If response=fx.DialogResponse.POSITIVE Then
 		AlignInParagraphs=True
 	Else
@@ -498,10 +505,15 @@ Sub ReAlignWithBleualign As ResumableSub
 					Dim segment As Map
 					segment.Initialize
 					segment.Put("source",item)
-					segment.Put("target",AlignedTargets.Get(index))
+					Dim alignedTarget As String=AlignedTargets.Get(index)
+					segment.Put("target",alignedTarget)
 					segment.Put("id",(paragraphNum-1))
 					If complete=False Then
 						segment.Put("complete",complete)
+					End If
+					Dim ratio As Double=s.TargetSourceRatio2(item,alignedTarget)
+					If ratio<0.5*targetSourceRatio Or ratio>2*targetSourceRatio Then
+						segment.Put("accurate",False)
 					End If
 					index=index+1
 					newSegments.Add(segment)
@@ -1057,6 +1069,10 @@ Public Sub fillPane(FirstIndex As Int, LastIndex As Int)
 				If bitext.GetDefault("complete",True)=False Then
 					For Each ta As TextArea In segmentPane.GetAllViewsRecursive
 						CSSUtils.SetBackgroundColor(ta,fx.Colors.Red)
+					Next
+			    else if bitext.GetDefault("accurate",True)=False Then
+					For Each ta As TextArea In segmentPane.GetAllViewsRecursive
+						CSSUtils.SetBackgroundColor(ta,fx.Colors.Yellow)
 					Next
 				End If
 				editorLV.Items.Set(i,segmentPane)

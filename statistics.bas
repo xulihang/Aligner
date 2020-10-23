@@ -37,6 +37,27 @@ Public Sub MsgBox(frm As Form,segments As List)
 	fx.Msgbox(frm,sb.ToString,"")
 End Sub
 
+Public Sub TargetSourceRatio(segments As List) As Double
+	Dim sourceWords As Int
+	Dim targetWords As Int
+	For Each segment As Map In segments
+		Dim source,target As String
+		source=segment.Get("source")
+		target=segment.Get("target")
+		sourceWords=sourceWords+calculateWords(source,sourceLang)
+		targetWords=targetWords+calculateWords(target,targetLang)
+	Next
+	Return targetWords/sourceWords
+End Sub
+
+Public Sub TargetSourceRatio2(source As String,target As String) As Double
+	Dim sourceWords As Int
+	Dim targetWords As Int
+	sourceWords=calculateWords(source,sourceLang)
+	targetWords=calculateWords(target,targetLang)
+	Return targetWords/sourceWords
+End Sub
+
 Public Sub calculateWords(text As String,lang As String) As Int
 	If Utils.LanguageHasSpace(lang) Then
 		If lang.StartsWith("ko") Then
