@@ -50,9 +50,9 @@ Library9=jpoi
 Module1=Project
 Module10=TMX
 Module11=SegmentsViewer
-Module12=xliffFilter
-Module13=SegmentsRemover
-Module14=statistics
+Module12=SegmentsRemover
+Module13=statistics
+Module14=xliffFilter
 Module15=ClipboardReader
 Module16=XmlNode
 Module17=XmlParser
@@ -513,7 +513,7 @@ Sub ReAlignWithBleualign As ResumableSub
 				AlignedSources=result.Get("sourceList")
 				AlignedTargets=result.Get("targetList")
 				Dim complete As Boolean=True
-				If TextIsInComplete(sourceList,AlignedSources) Or (TextIsInComplete(targetList,AlignedTargets)) Then
+				If TextIsInComplete(sourceList,AlignedSources) Or TextIsInComplete(targetList,AlignedTargets) Then
 					complete=False
 				End If
 				Dim index As Int=0
@@ -523,7 +523,9 @@ Sub ReAlignWithBleualign As ResumableSub
 					segment.Put("source",item)
 					Dim alignedTarget As String=AlignedTargets.Get(index)
 					segment.Put("target",alignedTarget)
-					segment.Put("id",(paragraphNum-1))
+					If AlignInParagraphs Then
+						segment.Put("id",(paragraphNum-1))
+					End If
 					If complete=False Then
 						segment.Put("complete",complete)
 					End If
