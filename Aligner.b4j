@@ -1,21 +1,22 @@
 ﻿AppType=JavaFX
 Build1=Default,b4j.example
 File1=aligner.png
-File10=segment.bjl
-File11=segmentationRules.srx
-File12=SegmentsRemover.bjl
-File13=splitterChooser.bjl
-File14=srxPicker.bjl
-File15=TextArea.bjl
-File16=TwoTextArea.bjl
+File10=progress.bjl
+File11=segment.bjl
+File12=segmentationRules.srx
+File13=SegmentsRemover.bjl
+File14=splitterChooser.bjl
+File15=srxPicker.bjl
+File16=TextArea.bjl
+File17=TwoTextArea.bjl
 File2=AssPicker.bjl
 File3=BiTextFilesPicker.bjl
 File4=clipboardreader.bjl
-File5=LangaugePairSelector.bjl
-File6=langcodes.txt
-File7=languagesWithoutSpace.txt
-File8=main.bjl
-File9=progress.bjl
+File5=editorLV.bjl
+File6=LangaugePairSelector.bjl
+File7=langcodes.txt
+File8=languagesWithoutSpace.txt
+File9=main.bjl
 FileGroup1=Default Group
 FileGroup10=Default Group
 FileGroup11=Default Group
@@ -24,6 +25,7 @@ FileGroup13=Default Group
 FileGroup14=Default Group
 FileGroup15=Default Group
 FileGroup16=Default Group
+FileGroup17=Default Group
 FileGroup2=Default Group
 FileGroup3=Default Group
 FileGroup4=Default Group
@@ -36,6 +38,7 @@ Group=Default Group
 Library1=jcore
 Library10=jshell
 Library11=byteconverter
+Library12=cssutils
 Library2=jfx
 Library3=javaobject
 Library4=jxmlsax
@@ -46,38 +49,39 @@ Library8=b4jdragtome
 Library9=jpoi
 Module1=Project
 Module10=TMX
-Module11=xliffFilter
-Module12=SegmentsRemover
-Module13=statistics
-Module14=ClipboardReader
-Module15=XmlNode
-Module16=XmlParser
-Module17=XMLUtils
-Module18=SimpleTag
-Module19=TagKind
+Module11=SegmentsViewer
+Module12=xliffFilter
+Module13=SegmentsRemover
+Module14=statistics
+Module15=ClipboardReader
+Module16=XmlNode
+Module17=XmlParser
+Module18=XMLUtils
+Module19=SimpleTag
 Module2=BiTextFilesPicker
-Module20=XMLBuilder2
-Module21=openxmlFilter
-Module22=workfileFilter
-Module23=FileChooserUtils
-Module24=progressDialog
-Module25=Bleualign
-Module26=assFilter
-Module27=AssPicker
-Module28=SplitterChooser
-Module29=POIWord
+Module20=TagKind
+Module21=XMLBuilder2
+Module22=openxmlFilter
+Module23=workfileFilter
+Module24=FileChooserUtils
+Module25=progressDialog
+Module26=Bleualign
+Module27=assFilter
+Module28=AssPicker
+Module29=SplitterChooser
 Module3=SrxPicker
-Module30=Map2Xml
-Module31=Xml2Map
+Module30=POIWord
+Module31=Map2Xml
+Module32=Xml2Map
 Module4=LanguagePairSelector
 Module5=Utils
 Module6=txtFilter
 Module7=icu4j
 Module8=segmentation
 Module9=SRX
-NumberOfFiles=16
-NumberOfLibraries=11
-NumberOfModules=31
+NumberOfFiles=17
+NumberOfLibraries=12
+NumberOfModules=32
 Version=7.8
 @EndOfDesignText@
 #Region Project Attributes 
@@ -479,18 +483,26 @@ Sub ReAlignWithBleualign As ResumableSub
 			
 			Dim ba As Bleualign
 			ba.Initialize
-			wait for (ba.Align(sourceList,targetList,translationList)) Complete (result As Map)
+			wait for (ba.Align(sourceList,targetList,translationList)) complete (result As Map)
 			If result.Get("success") Then
 				Log("success")
-				sourceList=result.Get("sourceList")
-				targetList=result.Get("targetList")
+				Dim AlignedSources,AlignedTargets As List
+				AlignedSources=result.Get("sourceList")
+				AlignedTargets=result.Get("targetList")
+				Dim complete As Boolean=True
+				If TextIsInComplete(sourceList,AlignedSources) Or (TextIsInComplete(targetList,AlignedTargets)) Then
+					complete=False
+				End If
 				Dim index As Int=0
-				For Each item As String In sourceList
+				For Each item As String In AlignedSources
 					Dim segment As Map
 					segment.Initialize
 					segment.Put("source",item)
-					segment.Put("target",targetList.Get(index))
+					segment.Put("target",AlignedTargets.Get(index))
 					segment.Put("id",(paragraphNum-1))
+					If complete=False Then
+						segment.Put("complete",complete)
+					End If
 					index=index+1
 					newSegments.Add(segment)
 				Next
@@ -506,6 +518,23 @@ Sub ReAlignWithBleualign As ResumableSub
 	Return ""
 End Sub
 
+Sub TextIsInComplete(before As List,after As List) As Boolean
+	Dim sb As StringBuilder
+	sb.Initialize
+	For Each segment As String In after
+		sb.Append(segment)
+	Next
+	Dim textAfter As String=sb.ToString
+	For Each segment As String In before
+		If textAfter.Contains(segment)=False Then
+			Log(segment)
+			Log(textAfter)
+			Return True
+		End If
+	Next
+	Return False
+End Sub
+
 Sub appendTranslations(segments As List,translationList As List) As Boolean
 	Dim new As List
 	new.Initialize
@@ -514,6 +543,15 @@ Sub appendTranslations(segments As List,translationList As List) As Boolean
 	Dim index As Int=0
 	For Each segment As Map In new
 		Dim source As String=segment.Get("source")
+		If segment.ContainsKey("id") Then
+			Dim id As String=segment.Get("id")
+			Dim para As Map=currentProject.paragraphs.Get(id)
+			If para.IsInitialized Then
+				If para.GetDefault("size",1)<=1 Then
+					Continue
+				End If
+			End If
+		End If
 		If source<>"" Then
 			If translationList.Size>0 Then
 				Dim translation As String=translationList.Get(0)
@@ -715,6 +753,13 @@ Sub exportSourceToTxt
 			sourceList.Initialize
 			For Each segment As Map In currentProject.segments
 				Dim source As String=segment.Get("source")
+				If segment.ContainsKey("id") Then
+					Dim id As String=segment.Get("id")
+					Dim para As Map=currentProject.paragraphs.Get(id)
+					If para.Get("size")<=1 Then
+						Continue
+					End If
+				End If
 				If source<>"" Then
 					sourceList.Add(source)
 				End If
@@ -787,7 +832,7 @@ Sub openProject
 	End If
 End Sub
 
-Sub loadSegmentsToListView(previousSegsList As List)
+Public Sub loadSegmentsToListView(previousSegsList As List)
 	If currentProject.segments<>Null And currentProject.segments.Size<>0 Then
 		If previousSegsList<>Null Then
 			previousSegments=previousSegsList
@@ -1009,6 +1054,11 @@ Public Sub fillPane(FirstIndex As Int, LastIndex As Int)
 				Dim bitext As Map
 				bitext=segments.Get(i)
 				addTextAreaToSegmentPane(segmentPane,bitext.Get("source"),bitext.Get("target"))
+				If bitext.GetDefault("complete",True)=False Then
+					For Each ta As TextArea In segmentPane.GetAllViewsRecursive
+						CSSUtils.SetBackgroundColor(ta,fx.Colors.Red)
+					Next
+				End If
 				editorLV.Items.Set(i,segmentPane)
 			End If
 		Else
@@ -1490,6 +1540,8 @@ Sub editorLV_Action
     Dim mi As MenuItem=Sender
 	Log(mi.Text)
 	Select mi.Text
+		Case "Revert"
+			revert
 		Case "Merge Source"
 			MergeSegments(editorLV.GetSelectedIndices,True)
 		Case "Merge Target"
@@ -1498,7 +1550,36 @@ Sub editorLV_Action
 			ViewParagraph
 		Case "Undo/Redo"
 			UndoRedo
+		Case "Remove warning status"
+			Dim segment As Map=currentProject.segments.Get(editorLV.SelectedIndex)
+			If segment.ContainsKey("id") Then
+				Dim previousSegs As List=getPreviousSegs
+				Dim paraID As String=segment.Get("id")
+				For Each segment As Map In currentProject.segments
+					Dim id As String=segment.Get("id")
+					If paraID=id Then
+						segment.Remove("complete")
+						segment.Remove("accurate")
+					End If
+				Next
+				loadSegmentsToListView(previousSegs)
+			End If
 	End Select
+End Sub
+
+Sub Revert
+	Dim segment As Map=currentProject.segments.Get(editorLV.SelectedIndex)
+	If segment.ContainsKey("id") Then
+		Dim id As String=segment.Get("id")
+		Dim para As Map=currentProject.paragraphs.Get(id)
+		Dim segments As List
+		segments.Initialize
+		segments.Add(para)
+		Dim sv As SegmentsViewer
+		sv.Initialize(segments,currentProject,id)
+		wait for (sv.SegmentInSilence) complete (done As Object)
+		sv.Replace
+	End If
 End Sub
 
 Sub MergeSegments(SelectedIndices As List,isSource As Boolean)
@@ -1566,10 +1647,16 @@ Sub UndoRedo
 End Sub
 
 Sub ViewParagraph
-	Dim segment As Map=currentProject.segments.Get(currentIndex)
+	Dim segment As Map=currentProject.segments.Get(editorLV.SelectedIndex)
 	If segment.ContainsKey("id") Then
-		Dim id As Int=segment.Get("id")
-		fx.Msgbox(MainForm,currentProject.paragraphs.Get(id),"")
+		Dim id As String=segment.Get("id")
+		Dim para As Map=currentProject.paragraphs.Get(id)
+		Dim segments As List
+		segments.Initialize
+		segments.Add(para)
+		Dim sv As SegmentsViewer
+		sv.Initialize(segments,currentProject,id)
+		sv.Show
 	Else
 		fx.Msgbox(MainForm,segment,"")
 	End If

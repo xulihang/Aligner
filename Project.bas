@@ -45,7 +45,7 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String) As ResumableSub
 		para.Initialize
 		para.Put("source",source)
 		para.Put("target",target)
-		paragraphs.Put(i,para)
+		
 		Dim langPair As Map=ProjectFile.Get("langPair")
 		Dim index As Int=0
 		wait for (segmentation.segmentedTxt(source,True,langPair.Get("source"),srxPath,True)) Complete (segmented As List)
@@ -82,7 +82,9 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String) As ResumableSub
 		For k=1 To sourceSegments.Size-initSize
 			ids.Add(i)
 		Next
-		
+		Dim paraNum As String=i
+		para.Put("size",sourceSegments.Size-initSize)
+		paragraphs.Put(paraNum,para)
 	Next
 	Dim result As Map
 	result.Initialize
