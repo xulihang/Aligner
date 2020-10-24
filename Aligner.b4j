@@ -405,7 +405,7 @@ Public Sub RemoveEmptySegments
 		Dim source,target As String
 		source=segment.Get("source")
 		target=segment.Get("target")
-        If source.Trim="" Or target.Trim="" Then
+        If source.Trim="" And target.Trim="" Then
 		    Continue
 		Else
 			new.Add(segment)
