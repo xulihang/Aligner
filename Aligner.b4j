@@ -49,21 +49,21 @@ Library8=b4jdragtome
 Library9=jpoi
 Module1=Project
 Module10=TMX
-Module11=SegmentsViewer
-Module12=SegmentsRemover
-Module13=statistics
-Module14=xliffFilter
-Module15=ClipboardReader
-Module16=XmlNode
-Module17=XmlParser
-Module18=XMLUtils
-Module19=SimpleTag
+Module11=openxmlFilter
+Module12=xliffFilter
+Module13=FileChooserUtils
+Module14=workfileFilter
+Module15=SegmentsViewer
+Module16=SegmentsRemover
+Module17=statistics
+Module18=ClipboardReader
+Module19=XmlNode
 Module2=BiTextFilesPicker
-Module20=TagKind
-Module21=XMLBuilder2
-Module22=openxmlFilter
-Module23=workfileFilter
-Module24=FileChooserUtils
+Module20=XmlParser
+Module21=XMLUtils
+Module22=SimpleTag
+Module23=TagKind
+Module24=XMLBuilder2
 Module25=progressDialog
 Module26=Bleualign
 Module27=assFilter
@@ -488,6 +488,8 @@ Sub ReAlignWithBleualign As ResumableSub
 			sourceList.Initialize
 			targetList.Initialize
 			translationList.Initialize
+			Dim firstSegment As Map=paragraph.Get(0)
+			Dim paraID As Int=firstSegment.GetDefault("id",paragraphNum-1)
 			For Each segment As Map In paragraph
 				Dim source,target,translation As String
 				source=segment.Get("source")
@@ -524,7 +526,7 @@ Sub ReAlignWithBleualign As ResumableSub
 					Dim alignedTarget As String=AlignedTargets.Get(index)
 					segment.Put("target",alignedTarget)
 					If AlignInParagraphs Then
-						segment.Put("id",(paragraphNum-1))
+						segment.Put("id",(paraID))
 					End If
 					If complete=False Then
 						segment.Put("complete",complete)

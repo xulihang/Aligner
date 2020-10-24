@@ -12,6 +12,14 @@
 <languagerules>
 <languagerule languagerulename="Default">
 <rule break="no">
+<beforebreak>(MD|Co).,*</beforebreak>
+<afterbreak></afterbreak>
+</rule>
+<rule break="no">
+<beforebreak>No\.+[\p{Pe}\p{Po}"”]*</beforebreak>
+<afterbreak>\s</afterbreak>
+</rule>
+<rule break="no">
 <beforebreak>\b(pp|e\.?\s*g|i\.?\s*e|no|[Vv]ol|[Rr]col|maj|Lt|[Ff]ig|[Ff]igs|[Vv]iz|[Vv]ols|[Aa]pprox|[Ii]ncl|Pres|Prof|[Dd]ept|min|max|[Gg]ovt|c\.?\s*f|vs)\.</beforebreak>
 <afterbreak>\s+[^\p{Lu}]</afterbreak>
 </rule>
@@ -32,7 +40,15 @@
 <afterbreak>\s+</afterbreak>
 </rule>
 <rule break="yes">
-<beforebreak>\w+[\p{Pe}\p{Po}"]*[\.?!:]+[\p{Pe}\p{Po}"”]*</beforebreak>
+<beforebreak>^[\d]+\.</beforebreak>
+<afterbreak>[^\d]</afterbreak>
+</rule>
+<rule break="yes">
+<beforebreak>^I+\.</beforebreak>
+<afterbreak></afterbreak>
+</rule>
+<rule break="yes">
+<beforebreak>\w+[\p{Pe}\p{Po}"]*[\.?!…]+[\p{Pe}\p{Po}"”]*</beforebreak>
 <afterbreak>\s+\P{Ll}</afterbreak>
 </rule>
 <rule break="yes">
@@ -41,7 +57,7 @@
 </rule>
 <!--CJK break characters-->
 <rule break="yes">
-<beforebreak>[\u3002\ufe52\uff0e\uff61\u2049\ufe56\uff1f\u203c\u2048\u2762\u2763\ufe57\uff01…]+[”]*</beforebreak>
+<beforebreak>[\u3002\ufe52\uff0e\uff61\u2049\ufe56\uff1f\u203c\u2048\u2762\u2763\ufe57\uff01]+[”\)）]*</beforebreak>
 <afterbreak></afterbreak>
 </rule>
 </languagerule>

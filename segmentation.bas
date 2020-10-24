@@ -48,6 +48,11 @@ Sub readRules(lang As String,srxPath As String,isSource As Boolean)
 
 End Sub
 
+Public Sub resetLangs
+	previousSourceLang=""
+	previousTargetLang=""
+End Sub
+
 Sub segmentedTxt(text As String,sentenceLevel As Boolean,sourceLang As String,path As String,isSource As Boolean) As ResumableSub
 	'Log("text"&text)
 	readRules(sourceLang,path,isSource)

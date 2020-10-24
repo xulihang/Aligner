@@ -34,9 +34,9 @@ End Sub
 
 Sub OkButton_MouseClicked (EventData As MouseEvent)
 	If File.Exists(SrxPathTextField.Text,"") Then
+		segmentation.resetLangs
 		frm.Close
 	Else
 		fx.Msgbox(frm,"Wrong srx path","")
 	End If
-
 End Sub
