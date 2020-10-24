@@ -101,15 +101,15 @@ End Sub
 
 Sub AddEmptySegmentsForNonTranslated(sourceList As List,targetList As List)
 	Dim index As Int=0
+	Dim positions As List
+	positions.Initialize
 	For Each text As String In sourceList
-		Dim neighboringText As String=NeighboringSegmentsText(index,targetList)
+		Dim neighboringText As String=NeighboringSegmentsText(index+positions.Size,targetList)
 		If sourceList.Size<>targetList.Size Then
 			For Each number As String In NumbersInSegment(text)
 				If neighboringText.Contains(number)=False Then
 					If index<targetList.Size-1 Then
-						targetList.InsertAt(index,"")
-					Else
-						targetList.Add("")
+						positions.Add(index)
 					End If					
 					Exit
 				End If
@@ -118,6 +118,12 @@ Sub AddEmptySegmentsForNonTranslated(sourceList As List,targetList As List)
 			Return
 		End If
 		index=index+1
+	Next
+	positions.Sort(True)
+	Log(positions)
+	For Each pos As Int In positions
+		Log(pos)
+		targetList.InsertAt(pos,"")
 	Next
 End Sub
 
@@ -151,7 +157,7 @@ Public Sub loadItemsToSegments(result As Map)
 	Dim sourceSegments,targetSegments,notes,ids As List
 	sourceSegments=result.Get("source")
 	targetSegments=result.Get("target")
-	'AddEmptySegmentsForNonTranslated(sourceSegments,targetSegments)
+	AddEmptySegmentsForNonTranslated(sourceSegments,targetSegments)
 	If result.ContainsKey("notes") Then
 		notes=result.Get("notes")
 	Else
