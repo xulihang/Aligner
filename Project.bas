@@ -99,11 +99,59 @@ Public Sub loadSegmentsInSentenceLevel(srxPath As String) As ResumableSub
 	Return ""
 End Sub
 
+Sub AddEmptySegmentsForNonTranslated(sourceList As List,targetList As List)
+	Dim index As Int=0
+	For Each text As String In sourceList
+		Dim neighboringText As String=NeighboringSegmentsText(index,targetList)
+		If sourceList.Size<>targetList.Size Then
+			For Each number As String In NumbersInSegment(text)
+				If neighboringText.Contains(number)=False Then
+					If index<targetList.Size-1 Then
+						targetList.InsertAt(index,"")
+					Else
+						targetList.Add("")
+					End If					
+					Exit
+				End If
+			Next
+		Else
+			Return
+		End If
+		index=index+1
+	Next
+End Sub
+
+Sub NeighboringSegmentsText(index As Int,targetList As List) As String
+	Dim neighbor As List
+	neighbor.Initialize
+	For i=Max(0,index-5) To Min(index+5,targetList.size-1)
+		neighbor.Add(targetList.Get(i))
+	Next
+	Dim sb As StringBuilder
+	sb.Initialize
+	For Each text As String In neighbor
+		sb.Append(text)
+	Next
+	Return sb.ToString
+End Sub
+
+Sub NumbersInSegment(text As String) As List
+	Dim result As List
+	result.Initialize
+    Dim matcher As Matcher
+	matcher=Regex.Matcher("\d+",text)
+	Do While matcher.Find
+		result.Add(matcher.Match)
+	Loop
+	Return result
+End Sub
+
 Public Sub loadItemsToSegments(result As Map)
 	segments.Clear
 	Dim sourceSegments,targetSegments,notes,ids As List
 	sourceSegments=result.Get("source")
 	targetSegments=result.Get("target")
+	'AddEmptySegmentsForNonTranslated(sourceSegments,targetSegments)
 	If result.ContainsKey("notes") Then
 		notes=result.Get("notes")
 	Else
