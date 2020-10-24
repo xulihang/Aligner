@@ -1595,6 +1595,10 @@ Sub editorLV_Action
 			MergeSegments(editorLV.GetSelectedIndices,True)
 		Case "Merge Target"
 			MergeSegments(editorLV.GetSelectedIndices,False)
+		Case "Add Blank Cells to Source"
+			AppendBlank(editorLV.GetSelectedIndices,True)
+		Case "Add Blank Cells to Target"
+			AppendBlank(editorLV.GetSelectedIndices,False)
 		Case "View Paragraph"
 			ViewParagraph
 		Case "Undo/Redo"
@@ -1614,6 +1618,46 @@ Sub editorLV_Action
 				loadSegmentsToListView(previousSegs)
 			End If
 	End Select
+End Sub
+
+Sub AppendBlank(SelectedIndices As List,isSource As Boolean)
+	Dim previousIndex As Int=SelectedIndices.Get(0)
+	For i=1 To SelectedIndices.Size-1
+		If SelectedIndices.Get(i)-previousIndex<>1 Then
+			Return
+		End If
+		previousIndex=SelectedIndices.Get(i)
+	Next
+	Dim previousSegs As List=getPreviousSegs
+	Dim sourceList,targetList As List
+	sourceList.Initialize
+	targetList.Initialize
+	For Each segment As Map In currentProject.segments
+		sourceList.Add(segment.Get("source"))
+		targetList.Add(segment.Get("target"))
+	Next
+	SelectedIndices.Sort(True)
+	Dim lastIndex As Int=SelectedIndices.Get(0)
+	Dim ListToInsert As List
+	ListToInsert.Initialize
+	For i=SelectedIndices.Size-1 To 0 Step -1
+		ListToInsert.Add("")
+	Next
+	If isSource Then
+		For Each item As String In ListToInsert
+			sourceList.InsertAt(lastIndex,item)
+		Next
+	Else
+		For Each item As String In ListToInsert
+			targetList.InsertAt(lastIndex,item)
+		Next
+	End If
+	Dim result As Map
+	result.Initialize
+	result.Put("source",sourceList)
+	result.Put("target",targetList)
+	currentProject.loadItemsToSegments(result)
+	loadSegmentsToListView(previousSegs)
 End Sub
 
 Sub Revert

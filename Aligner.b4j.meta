@@ -97,6 +97,6 @@ ModuleClosedNodes6=
 ModuleClosedNodes7=
 ModuleClosedNodes8=
 ModuleClosedNodes9=
-NavigationStack=BiTextFilesPicker,targetDrag_ReceivedFilePath,78,0,BiTextFilesPicker,sourceDrag_ReceivedFilePath,73,0,BiTextFilesPicker,ChooseSourceButton_MouseClicked,61,0,BiTextFilesPicker,ChooseTargetButton_MouseClicked,56,0,BiTextFilesPicker,askIsSource,82,1,BiTextFilesPicker,chooseFile,67,4,workfileFilter,getBitext,6,0,workfileFilter,Process_Globals,5,0,BiTextFilesPicker,ShowAndWait,25,0,BiTextFilesPicker,ReadButton_MouseClicked,44,6
+NavigationStack=BiTextFilesPicker,ReadButton_MouseClicked,42,6,Main,editorLV_Action,1533,5,Project,Class_Globals,0,0,Main,MergeSegments,1624,0,Main,Revert,1573,0,Project,loadSegmentsInSentenceLevel,75,0,Project,Initialize,11,0,Project,loadItemsToSegments,102,0,Project,appendSegments,124,0,Main,AppendBlank,1559,6
 SelectedBuild=0
 VisibleModules=1,2,3,4,5,6,7,8,9,10,22,14,24,23
