@@ -43,6 +43,13 @@ Sub ReadButton_MouseClicked (EventData As MouseEvent)
 		sourceList=openxmlFilter.readFileIntoParagraphs(SourcePathTextField.Text)
 	else if SourcePathTextField.Text.ToLowerCase.EndsWith(".xlf") Then
 		sourceList=xliffFilter.readFileIntoParagraphs(SourcePathTextField.Text,SourcePathTextField.Tag)
+	else if SourcePathTextField.Text.ToLowerCase.EndsWith(".json") Then
+		Dim workFileResult As Map=workfileFilter.getBitext(SourcePathTextField.Text)
+		If SourcePathTextField.Tag=True Then
+			sourceList=workFileResult.Get("source")
+		Else
+			sourceList=workFileResult.Get("target")
+		End If
 	End If
 	
 	If TargetPathTextField.Text.ToLowerCase.EndsWith(".txt") Then
@@ -51,6 +58,13 @@ Sub ReadButton_MouseClicked (EventData As MouseEvent)
 		targetList=openxmlFilter.readFileIntoParagraphs(TargetPathTextField.Text)
 	else if TargetPathTextField.Text.ToLowerCase.EndsWith(".xlf") Then
 		targetList=xliffFilter.readFileIntoParagraphs(TargetPathTextField.Text,TargetPathTextField.Tag)
+	else if TargetPathTextField.Text.ToLowerCase.EndsWith(".json") Then
+		Dim workFileResult As Map=workfileFilter.getBitext(TargetPathTextField.Text)
+		If TargetPathTextField.Tag=True Then
+			targetList=workFileResult.Get("source")
+		Else
+			targetList=workFileResult.Get("target")
+		End If
 	End If
 
 	result.Put("source",sourceList)
@@ -60,33 +74,33 @@ End Sub
 
 Sub ChooseTargetButton_MouseClicked (EventData As MouseEvent)
 	TargetPathTextField.Text=chooseFile
-	askIsSourceForXLIFF(TargetPathTextField)
+	askIsSource(TargetPathTextField)
 End Sub
 
 Sub ChooseSourceButton_MouseClicked (EventData As MouseEvent)
 	SourcePathTextField.Text=chooseFile
-	askIsSourceForXLIFF(SourcePathTextField)
+	askIsSource(SourcePathTextField)
 End Sub
 
 Sub chooseFile As String
 	Dim fc As FileChooser
 	fc.Initialize
-	fc.SetExtensionFilter("Text Files",Array As String("*.txt","*.docx","*.xlf"))
+	fc.SetExtensionFilter("Text Files",Array As String("*.txt","*.docx","*.xlf","*.json"))
 	Return fc.ShowOpen(frm)
 End Sub
 
 Sub sourceDrag_ReceivedFilePath (Filepath As String)
 	SourcePathTextField.Text=Filepath
-	askIsSourceForXLIFF(SourcePathTextField)
+	askIsSource(SourcePathTextField)
 End Sub
 
 Sub targetDrag_ReceivedFilePath (Filepath As String)
 	TargetPathTextField.Text=Filepath
-	askIsSourceForXLIFF(TargetPathTextField)
+	askIsSource(TargetPathTextField)
 End Sub
 
-Sub askIsSourceForXLIFF(tf As TextField)
-	If tf.Text.ToLowerCase.EndsWith(".xlf") Then
+Sub askIsSource(tf As TextField)
+	If tf.Text.ToLowerCase.EndsWith(".xlf") Or tf.Text.ToLowerCase.EndsWith(".json")  Then
 		Dim resp As Int=fx.Msgbox2(frm,"Read source or target?","","Source","","Target",fx.MSGBOX_CONFIRMATION)
 		If resp=fx.DialogResponse.POSITIVE Then
 			tf.Tag=True
