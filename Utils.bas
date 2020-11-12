@@ -9,6 +9,18 @@ Sub Process_Globals
 	Private fx As JFX
 End Sub
 
+'win, mac or linux
+Sub DetectOS As String
+	Dim os As String = GetSystemProperty("os.name", "").ToLowerCase
+	If os.Contains("win") Then
+		Return "win"
+	Else If os.Contains("mac") Then
+		Return "mac"
+	Else
+		Return "linux"
+	End If
+End Sub
+
 Sub getMap(key As String,parentmap As Map) As Map
 	Return parentmap.Get(key)
 End Sub

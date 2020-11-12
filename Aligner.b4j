@@ -73,6 +73,7 @@ Module3=SrxPicker
 Module30=POIWord
 Module31=Map2Xml
 Module32=Xml2Map
+Module33=LFAlign
 Module4=LanguagePairSelector
 Module5=Utils
 Module6=txtFilter
@@ -81,7 +82,7 @@ Module8=segmentation
 Module9=SRX
 NumberOfFiles=17
 NumberOfLibraries=12
-NumberOfModules=32
+NumberOfModules=33
 Version=7.8
 @EndOfDesignText@
 #Region Project Attributes 
@@ -259,6 +260,12 @@ Sub MenuBar1_Action
 			s.MsgBox(MainForm,currentProject.segments)
 		Case "Clean tags"
 			CleanTags
+		Case "Align with LF Aligner"
+			If currentProject.IsInitialized Then
+				Dim previousSegs As List=getPreviousSegs
+				wait for (AlignWithLFAligner) Complete (temp As Object)
+				loadSegmentsToListView(previousSegs)
+			End If
 		Case "Align"
 			If currentProject.IsInitialized Then
 				Dim previousSegs As List=getPreviousSegs
@@ -324,16 +331,19 @@ Public Sub RemoveDuplicate
 	sizeBefore=currentProject.segments.Size
 	For Each segment As Map In currentProject.segments
 		Dim source As String = segment.Get("source")
+		Dim target As String = segment.Get("target")
 		If source="" Then
 			new.Add(segment)
 			Continue
 		End If
-		If map1.ContainsKey(source)=False Then
-			map1.Put(source,segment)
-			new.Add(segment)
+		If map1.ContainsKey(source) Then
+			If map1.Get(source)=target Then 'duplicate
+				Continue
+			End If
 		Else
-			Continue
+			map1.Put(source,target)
 		End If
+		new.Add(segment)
 	Next
 	sizeAfter=new.Size
 	Dim previousSegs As List=getPreviousSegs
@@ -426,6 +436,38 @@ Sub askHighPrecision As Boolean
 		highPrecison=False
 	End If
 	Return highPrecison
+End Sub
+
+Sub AlignWithLFAligner As ResumableSub
+	Dim langPair As Map
+	langPair=currentProject.getProjectFileValue("langPair")
+	Dim sourceList,targetList As List
+	sourceList.Initialize
+	targetList.Initialize
+	For Each segment As Map In currentProject.segments
+		sourceList.Add(segment.Get("source"))
+		targetList.Add(segment.Get("target"))
+	Next
+	Dim lfa As LFAlign
+	lfa.Initialize
+	wait for (lfa.Align(sourceList,targetList,langPair.Get("source"),langPair.Get("target"))) complete (result As Map)
+	If result.Get("success") Then
+		Dim AlignedSources,AlignedTargets As List
+		AlignedSources=result.Get("sourceList")
+		AlignedTargets=result.Get("targetList")
+		currentProject.segments.Clear
+		Dim index=0 As Int
+		For Each item As String In AlignedSources
+			Dim segment As Map
+			segment.Initialize
+			segment.Put("source",item)
+			Dim alignedTarget As String=AlignedTargets.Get(index)
+			segment.Put("target",alignedTarget)
+			index=index+1
+			currentProject.segments.Add(segment)
+		Next
+	End If
+	Return ""
 End Sub
 
 Sub ReAlignWithBleualign As ResumableSub
