@@ -1699,9 +1699,15 @@ Sub AppendBlank(SelectedIndices As List,isSource As Boolean)
 End Sub
 
 Sub Revert
-	Dim segment As Map=currentProject.segments.Get(editorLV.SelectedIndex)
-	If segment.ContainsKey("id") Then
-		Dim id As String=segment.Get("id")
+	Dim paraIDs As Map
+	paraIDs.Initialize
+	For Each index As Int In editorLV.GetSelectedIndices
+		Dim segment As Map=currentProject.segments.Get(index)
+	    If segment.ContainsKey("id") Then
+			paraIDs.Put(segment.Get("id"),"")
+		End If
+	Next
+	For Each id As String In paraIDs.Keys
 		Dim para As Map=currentProject.paragraphs.Get(id)
 		Dim segments As List
 		segments.Initialize
@@ -1710,7 +1716,7 @@ Sub Revert
 		sv.Initialize(segments,currentProject,id)
 		wait for (sv.SegmentInSilence) complete (done As Object)
 		sv.Replace
-	End If
+	Next
 End Sub
 
 Sub MergeSegments(SelectedIndices As List,isSource As Boolean)
