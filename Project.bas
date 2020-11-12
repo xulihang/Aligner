@@ -157,7 +157,7 @@ Public Sub loadItemsToSegments(result As Map)
 	Dim sourceSegments,targetSegments,notes,ids As List
 	sourceSegments=result.Get("source")
 	targetSegments=result.Get("target")
-	AddEmptySegmentsForNonTranslated(sourceSegments,targetSegments)
+	'AddEmptySegmentsForNonTranslated(sourceSegments,targetSegments)
 	If result.ContainsKey("notes") Then
 		notes=result.Get("notes")
 	Else

@@ -541,7 +541,7 @@ Sub AutoAlign(method As String) As ResumableSub
 			
 			Dim complete As Boolean=True
 
-			If TextIsInComplete(sourceList,AlignedSources) Or TextIsInComplete(targetList,AlignedTargets) Then
+			If TextIsIncomplete(sourceList,AlignedSources) Or TextIsIncomplete(targetList,AlignedTargets) Then
 				complete=False
 			End If
 
