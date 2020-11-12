@@ -263,13 +263,13 @@ Sub MenuBar1_Action
 		Case "Align with LF Aligner"
 			If currentProject.IsInitialized Then
 				Dim previousSegs As List=getPreviousSegs
-				wait for (AlignWithLFAligner) Complete (temp As Object)
+				wait for (AutoAlign("lfalign")) Complete (temp As Object)
 				loadSegmentsToListView(previousSegs)
 			End If
 		Case "Align"
 			If currentProject.IsInitialized Then
 				Dim previousSegs As List=getPreviousSegs
-				wait for (ReAlignWithBleualign) Complete (temp As Object)
+				wait for (AutoAlign("bleualign")) Complete (temp As Object)
 				loadSegmentsToListView(previousSegs)
 			End If
 		Case "Export Source to TXT for Translation"
@@ -438,39 +438,8 @@ Sub askHighPrecision As Boolean
 	Return highPrecison
 End Sub
 
-Sub AlignWithLFAligner As ResumableSub
-	Dim langPair As Map
-	langPair=currentProject.getProjectFileValue("langPair")
-	Dim sourceList,targetList As List
-	sourceList.Initialize
-	targetList.Initialize
-	For Each segment As Map In currentProject.segments
-		sourceList.Add(segment.Get("source"))
-		targetList.Add(segment.Get("target"))
-	Next
-	Dim lfa As LFAlign
-	lfa.Initialize
-	wait for (lfa.Align(sourceList,targetList,langPair.Get("source"),langPair.Get("target"))) complete (result As Map)
-	If result.Get("success") Then
-		Dim AlignedSources,AlignedTargets As List
-		AlignedSources=result.Get("sourceList")
-		AlignedTargets=result.Get("targetList")
-		currentProject.segments.Clear
-		Dim index=0 As Int
-		For Each item As String In AlignedSources
-			Dim segment As Map
-			segment.Initialize
-			segment.Put("source",item)
-			Dim alignedTarget As String=AlignedTargets.Get(index)
-			segment.Put("target",alignedTarget)
-			index=index+1
-			currentProject.segments.Add(segment)
-		Next
-	End If
-	Return ""
-End Sub
-
-Sub ReAlignWithBleualign As ResumableSub
+'bleualign, lfalign
+Sub AutoAlign(method As String) As ResumableSub
 	Dim response As Int=fx.Msgbox2(MainForm,"Align paragraph by paragraph (works when segments are aligned in paragraph level)?","","Yes","Cancel","No",fx.MSGBOX_CONFIRMATION)
 	Dim AlignInParagraphs As Boolean
 	If response=fx.DialogResponse.CANCEL Then
@@ -488,111 +457,128 @@ Sub ReAlignWithBleualign As ResumableSub
 	Else
 		AlignInParagraphs=False
 	End If
-	Dim fc As FileChooser
-	fc.Initialize
-	fc.SetExtensionFilter("txt", Array As String("*.txt"))
-	fc.Title="Please select the translation file"
-	Dim path As String=fc.ShowOpen(MainForm)
-	If File.Exists(path,"") Then
-		Dim segments As List
-		segments.Initialize
-		segments.AddAll(currentProject.segments)
-		
+	If method="bleualign" Then
+		Dim fc As FileChooser
+		fc.Initialize
+		fc.SetExtensionFilter("txt", Array As String("*.txt"))
+		fc.Title="Please select the translation file"
+		Dim path As String=fc.ShowOpen(MainForm)
+		If File.Exists(path,"")=False Then
+			Return ""
+		End If
+	End If
+
+
+	Dim segments As List
+	segments.Initialize
+	segments.AddAll(currentProject.segments)
+	
+	If method="bleualign" Then
 		Dim translationListALL As List=File.ReadList(path,"")
 		Dim appended As Boolean=appendTranslations(segments,translationListALL)
 		If appended=False Then
 			fx.Msgbox(MainForm,"Translation and source text are not aligned","")
 			Return ""
 		End If
-		
-		Dim newSegments As List
-		newSegments.Initialize
-		
+	End If
 
-		
-		Dim paragraphs As List
-		If AlignInParagraphs Then
-			paragraphs=segmentsInParagraphs(segments)
-		Else
-			paragraphs.Initialize
-			paragraphs.Add(segments)
+	
+	Dim newSegments As List
+	newSegments.Initialize
+	
+	Dim paragraphs As List
+	If AlignInParagraphs Then
+		paragraphs=segmentsInParagraphs(segments)
+	Else
+		paragraphs.Initialize
+		paragraphs.Add(segments)
+	End If
+	progressDialog.Show("Aligning...","align")
+	Dim paragraphNum As Int
+	For Each paragraph As List In paragraphs
+		paragraphNum=paragraphNum+1
+		progressDialog.update(paragraphNum,paragraphs.Size)
+		If paragraph.Size<=1 Then
+			newSegments.AddAll(paragraph)
+			Continue
 		End If
-		progressDialog.Show("Aligning...","align")
-		Dim paragraphNum As Int
-		For Each paragraph As List In paragraphs
-			paragraphNum=paragraphNum+1
-			progressDialog.update(paragraphNum,paragraphs.Size)
-			If paragraph.Size<=1 Then
-				newSegments.AddAll(paragraph)
-				Continue
+		Dim sourceList,targetList,translationList As List
+		sourceList.Initialize
+		targetList.Initialize
+		translationList.Initialize
+		Dim firstSegment As Map=paragraph.Get(0)
+		Dim paraID As Int=firstSegment.GetDefault("id",paragraphNum-1)
+		For Each segment As Map In paragraph
+			Dim source,target,translation As String
+			source=segment.Get("source")
+			target=segment.Get("target")
+			translation=segment.GetDefault("alt-translation","")
+			If source<>"" Then
+				sourceList.Add(source)
 			End If
-			Dim sourceList,targetList,translationList As List
-			sourceList.Initialize
-			targetList.Initialize
-			translationList.Initialize
-			Dim firstSegment As Map=paragraph.Get(0)
-			Dim paraID As Int=firstSegment.GetDefault("id",paragraphNum-1)
-			For Each segment As Map In paragraph
-				Dim source,target,translation As String
-				source=segment.Get("source")
-				target=segment.Get("target")
-				translation=segment.GetDefault("alt-translation","")
-				If source<>"" Then
-					sourceList.Add(source)
-				End If
-				If target<>"" Then
-					targetList.Add(target)
-				End If
-				If translation<>"" Then
-					translationList.Add(translation)
-				End If
-			Next
-			
+			If target<>"" Then
+				targetList.Add(target)
+			End If
+			If translation<>"" Then
+				translationList.Add(translation)
+			End If
+		Next
+		If method="bleualign" Then
 			Dim ba As Bleualign
 			ba.Initialize
 			wait for (ba.Align(sourceList,targetList,translationList)) complete (result As Map)
-			If result.Get("success") Then
-				Log("success")
-				Dim AlignedSources,AlignedTargets As List
-				AlignedSources=result.Get("sourceList")
-				AlignedTargets=result.Get("targetList")
-				Dim complete As Boolean=True
-				If TextIsInComplete(sourceList,AlignedSources) Or TextIsInComplete(targetList,AlignedTargets) Then
-					complete=False
-				End If
-				Dim index As Int=0
-				For Each item As String In AlignedSources
-					Dim segment As Map
-					segment.Initialize
-					segment.Put("source",item)
-					Dim alignedTarget As String=AlignedTargets.Get(index)
-					segment.Put("target",alignedTarget)
-					If AlignInParagraphs Then
-						segment.Put("id",(paraID))
-					End If
-					If complete=False Then
-						segment.Put("complete",complete)
-					End If
-					Dim ratio As Double=s.TargetSourceRatio2(item,alignedTarget)
-					If ratio<0.5*targetSourceRatio Or ratio>2*targetSourceRatio Then
-						segment.Put("accurate",False)
-					End If
-					index=index+1
-					newSegments.Add(segment)
-				Next
-			Else
-				Log("failed")
-				newSegments.AddAll(paragraph)
+		Else
+			Dim lfa As LFAlign
+			lfa.Initialize
+			wait for (lfa.Align(sourceList,targetList,langPair.Get("source"),langPair.Get("target"))) complete (result As Map)
+		End If
+		
+		If result.Get("success") Then
+			Log("success")
+			Dim AlignedSources,AlignedTargets As List
+			AlignedSources=result.Get("sourceList")
+			AlignedTargets=result.Get("targetList")
+			
+			Dim complete As Boolean=True
+
+			If TextIsInComplete(sourceList,AlignedSources) Or TextIsInComplete(targetList,AlignedTargets) Then
+				complete=False
 			End If
-		Next
-		currentProject.segments.Clear
-		currentProject.segments.AddAll(newSegments)
-		progressDialog.close
-	End If
+
+
+			Dim index As Int=0
+			For Each item As String In AlignedSources
+				Dim segment As Map
+				segment.Initialize
+				segment.Put("source",item)
+				Dim alignedTarget As String=AlignedTargets.Get(index)
+				segment.Put("target",alignedTarget)
+				If AlignInParagraphs Then
+					segment.Put("id",(paraID))
+				End If
+				If complete=False Then
+					segment.Put("complete",complete)
+				End If
+				Dim ratio As Double=s.TargetSourceRatio2(item,alignedTarget)
+				If ratio<0.5*targetSourceRatio Or ratio>2*targetSourceRatio Then
+					segment.Put("accurate",False)
+				End If
+				index=index+1
+				newSegments.Add(segment)
+			Next
+		Else
+			Log("failed")
+			newSegments.AddAll(paragraph)
+		End If
+	Next
+	currentProject.segments.Clear
+	currentProject.segments.AddAll(newSegments)
+	progressDialog.close
+
 	Return ""
 End Sub
 
-Sub TextIsInComplete(before As List,after As List) As Boolean
+Sub TextIsIncomplete(before As List,after As List) As Boolean
 	Dim sb As StringBuilder
 	sb.Initialize
 	For Each segment As String In after
