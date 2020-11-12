@@ -49,31 +49,31 @@ Library8=b4jdragtome
 Library9=jpoi
 Module1=Project
 Module10=TMX
-Module11=SegmentsRemover
-Module12=SegmentsViewer
-Module13=openxmlFilter
-Module14=xliffFilter
-Module15=FileChooserUtils
-Module16=workfileFilter
-Module17=statistics
-Module18=ClipboardReader
-Module19=XmlNode
+Module11=XmlParser
+Module12=Bleualign
+Module13=LFAlign
+Module14=progressDialog
+Module15=SegmentsRemover
+Module16=SegmentsViewer
+Module17=openxmlFilter
+Module18=xliffFilter
+Module19=FileChooserUtils
 Module2=BiTextFilesPicker
-Module20=XmlParser
-Module21=XMLUtils
-Module22=SimpleTag
-Module23=TagKind
-Module24=XMLBuilder2
-Module25=progressDialog
-Module26=Bleualign
-Module27=assFilter
-Module28=AssPicker
-Module29=SplitterChooser
+Module20=workfileFilter
+Module21=statistics
+Module22=ClipboardReader
+Module23=XmlNode
+Module24=XMLUtils
+Module25=SimpleTag
+Module26=TagKind
+Module27=XMLBuilder2
+Module28=assFilter
+Module29=AssPicker
 Module3=SrxPicker
-Module30=POIWord
-Module31=Map2Xml
-Module32=Xml2Map
-Module33=LFAlign
+Module30=SplitterChooser
+Module31=POIWord
+Module32=Map2Xml
+Module33=Xml2Map
 Module4=LanguagePairSelector
 Module5=Utils
 Module6=txtFilter
@@ -586,10 +586,13 @@ Sub TextIsIncomplete(before As List,after As List) As Boolean
 	Next
 	Dim textAfter As String=sb.ToString
 	For Each segment As String In before
-		If textAfter.Contains(segment)=False Then
-			Log(segment)
-			Log(textAfter)
-			Return True
+		segment=segment.Trim
+		If segment<>"" Then
+			If textAfter.Contains(segment)=False Then
+				Log(segment)
+				Log(textAfter)
+				Return True
+			End If
 		End If
 	Next
 	Return False
@@ -1634,19 +1637,24 @@ Sub editorLV_Action
 		Case "Undo/Redo"
 			UndoRedo
 		Case "Remove warning status"
-			Dim segment As Map=currentProject.segments.Get(editorLV.SelectedIndex)
-			If segment.ContainsKey("id") Then
-				Dim previousSegs As List=getPreviousSegs
-				Dim paraID As String=segment.Get("id")
-				For Each segment As Map In currentProject.segments
-					Dim id As String=segment.Get("id")
-					If paraID=id Then
-						segment.Remove("complete")
-						segment.Remove("accurate")
-					End If
-				Next
-				loadSegmentsToListView(previousSegs)
-			End If
+			For Each index As Int In editorLV.GetSelectedIndices
+				Dim segment As Map=currentProject.segments.Get(index)
+				If segment.ContainsKey("id") Then
+					Dim previousSegs As List=getPreviousSegs
+					Dim paraID As String=segment.Get("id")
+					For Each segment As Map In currentProject.segments
+						Dim id As String=segment.Get("id")
+						If paraID=id Then
+							segment.Remove("complete")
+							segment.Remove("accurate")
+						End If
+					Next
+				Else
+					segment.Remove("complete")
+					segment.Remove("accurate")
+				End If
+			Next
+			loadSegmentsToListView(previousSegs)
 	End Select
 End Sub
 
