@@ -418,8 +418,8 @@ Public Sub PreserveOnlyFirstOccurence
 		Dim source,target As String
 		source=segment.Get("source")
 		target=segment.Get("target")
-		sourceSet.Add(source)
-		targetSet.Add(target)
+		sourceSet.Add(source.Trim)
+		targetSet.Add(target.Trim)
 	Next
 	Dim result As Map
 	result.Initialize
