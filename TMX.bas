@@ -152,7 +152,7 @@ Sub exportQuick(segments As List,sourceLang As String,targetLang As String,path 
 		Dim target As String=bitext.Get("target")
 		source=HandleTags(source,includeTags,useTMXTags)
 		target=HandleTags(target,includeTags,useTMXTags)
-		If useTMXTags=False Then
+		If includeTags=False Then
 			source=EscapeXml(source)
 			target=EscapeXml(target)
 		End If
@@ -173,6 +173,8 @@ Sub HandleTags(text As String,includeTags As Boolean,useTMXTags As Boolean) As S
 	If includeTags Then
 		If useTMXTags Then
 			text=TagsConvertedXML(text)
+		Else
+			text=XMLUtils.EscapeXml(text)
 		End If
 	Else
 		text=XMLUtils.TagsRemoved(text,False)
