@@ -29,7 +29,7 @@ Public Sub Align(sourceList As List,targetList As List,sourceLang As String,targ
 	If Utils.DetectOS="win" Then
 		executable="LFAlign.bat"
 	Else
-		executable="LFAlign.sh"
+		executable="./LFAlign.sh"
 	End If
 	sh.Initialize("sh",executable,Array As String(sourceLang,targetLang))
 	sh.WorkingDirectory=File.DirApp
