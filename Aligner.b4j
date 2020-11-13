@@ -39,6 +39,7 @@ Library1=jcore
 Library10=jshell
 Library11=byteconverter
 Library12=cssutils
+Library13=b4xcollections
 Library2=jfx
 Library3=javaobject
 Library4=jxmlsax
@@ -49,11 +50,11 @@ Library8=b4jdragtome
 Library9=jpoi
 Module1=Project
 Module10=TMX
-Module11=SegmentsViewer
-Module12=statistics
-Module13=XmlParser
-Module14=Bleualign
-Module15=LFAlign
+Module11=LFAlign
+Module12=SegmentsViewer
+Module13=statistics
+Module14=XmlParser
+Module15=Bleualign
 Module16=progressDialog
 Module17=SegmentsRemover
 Module18=openxmlFilter
@@ -81,7 +82,7 @@ Module7=icu4j
 Module8=segmentation
 Module9=SRX
 NumberOfFiles=17
-NumberOfLibraries=12
+NumberOfLibraries=13
 NumberOfModules=33
 Version=7.8
 @EndOfDesignText@
@@ -406,6 +407,33 @@ Public Sub RemoveSegments(segmentsText As List,isSource As Boolean)
 	Dim previousSegs As List=getPreviousSegs
 	currentProject.loadItemsToSegments(result)
 	loadSegmentsToListView(previousSegs)
+End Sub
+
+Public Sub PreserveOnlyFirstOccurence
+	Dim sourceSet,targetSet As B4XSet
+	sourceSet.Initialize
+	targetSet.Initialize
+	Dim sizeBefore As Int=currentProject.segments.Size
+	For Each segment As Map In currentProject.segments
+		Dim source,target As String
+		source=segment.Get("source")
+		target=segment.Get("target")
+		sourceSet.Add(source)
+		targetSet.Add(target)
+	Next
+	Dim result As Map
+	result.Initialize
+	result.Put("source",sourceSet.AsList)
+	result.Put("target",targetSet.AsList)
+	Dim previousSegs As List=getPreviousSegs
+	currentProject.loadItemsToSegments(result)
+	loadSegmentsToListView(previousSegs)
+	
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append(sizeBefore-sourceSet.Size).Append(" source segments removed.").Append(CRLF)
+	sb.Append(sizeBefore-targetSet.Size).Append(" target segments removed.")
+	fx.Msgbox(MainForm,sb.ToString,"")
 End Sub
 
 Public Sub RemoveEmptySegments

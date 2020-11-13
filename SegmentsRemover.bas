@@ -45,3 +45,7 @@ End Sub
 Sub RemoveDuplicateButton_MouseClicked (EventData As MouseEvent)
 	Main.RemoveDuplicate
 End Sub
+
+Sub PreserveFirstOccurenceButton_MouseClicked (EventData As MouseEvent)
+	Main.PreserveOnlyFirstOccurence
+End Sub
